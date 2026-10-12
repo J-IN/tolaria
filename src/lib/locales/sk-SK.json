@@ -395,7 +395,7 @@
   "settings.privacy.crashReportingDescription": "Odosielať anonymné hlásenia o chybách",
   "settings.privacy.analytics": "Analýza používania",
   "settings.privacy.analyticsDescription": "Zdieľať anonymné vzorce používania",
-  "settings.footerShortcut": "⌘, na otvorenie nastavení",
+  "settings.footerShortcut": "{shortcut} na otvorenie nastavení",
   "settings.cancel": "Zrušiť",
   "settings.save": "Uložiť",
   "common.cancel": "Zrušiť",

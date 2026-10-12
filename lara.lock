@@ -397,7 +397,7 @@ files:
     settings.privacy.crashReportingDescription: e9d7c7efce44adc08d0460be1aad5c42
     settings.privacy.analytics: 29d55bb222ea76e1a17396375dfab228
     settings.privacy.analyticsDescription: a0f8b61d555d6d3fd279de2f47aaca76
-    settings.footerShortcut: 7dc840d6b0ef9f422a663ba41975871e
+    settings.footerShortcut: 67c68a95191f7dddc0e5e66aa18519fb
     settings.cancel: ea4788705e6873b424c65e91c2846b19
     settings.save: c9cc8cce247e49bae79f15173ce97354
     common.cancel: ea4788705e6873b424c65e91c2846b19
