@@ -6,6 +6,8 @@ Standing rule (Luca, 10 Oct 2026): Tolaria Web reuses the desktop shell, BlockNo
 
 None yet.
 
+Spike S3 (TOL-5) adds the server and the protocol package and touches no UI.
+
 Spike S1 (TOL-3, TOL-4) builds the existing shell as a static web bundle without changing any component, style, token or copy. `apps/web/` contains build and test configuration only.
 
 | Date | What changed | Why | Where |

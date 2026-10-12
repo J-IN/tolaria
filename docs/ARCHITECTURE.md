@@ -946,6 +946,10 @@ Browser smoke tests can also override `window.__mockHandlers` before the app boo
 
 `apps/web/` is the Tolaria Web build target. `pnpm build:web` builds the same `index.html` and `src/` into `apps/web/dist` with no Tauri runtime, and `pnpm preview:web` serves it on loopback. Until the remote backend exists it runs on this mock layer. `pnpm build` and the Tauri bundle are unaffected. See `docs/web/s1-tauri-inventory.md` for the command inventory, migration path and server surface.
 
+### Tolaria remote (`apps/server`, `packages/protocol`)
+
+`apps/server` is the Tolaria remote: a Node service that owns a git working clone of one vault and serves the versioned file protocol in `docs/web/protocol.md` (ADR 0186). Each save is one commit between a pull and a push; a write based on an outdated revision becomes a conflict copy. `packages/protocol` holds the wire types the server and the web client share. Both are plain directories of the root package, like `apps/web`: the shell does not import them, `pnpm build` only typechecks them, and the desktop bundle and the lockfile are unchanged. `pnpm test:server` runs their tests against real git repositories in temporary directories. The collaboration channel is reserved in the protocol and not built; see `docs/web/s3-spike-report.md`.
+
 ## State Management
 
 No Redux or global context. State lives in the root `App.tsx` and custom hooks:

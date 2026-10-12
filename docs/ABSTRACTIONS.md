@@ -481,6 +481,18 @@ The renderer keeps app shortcuts platform-exact where they overlap with native d
 
 The desktop and mock backends implement only `files`, through the existing commands. Nothing in the app is routed through the interface yet.
 
+### Tolaria remote protocol and server
+
+`packages/protocol` (ADR 0186) defines what a `remote` backend speaks: `PROTOCOL_VERSION`, the `/v1` routes, capabilities, and the request and response shapes (`FileEntry`, `WriteResult`, `RenameRequest`, `SearchResponse`, `ErrorBody`). A file's `etag` is its git blob id and maps to the seam's `VaultRevision`; `WriteResult.outcome` is `created`, `updated`, `unchanged`, `recreated` or `conflict`, and a `conflict` carries the path of the conflict copy and the `current` revision of the original.
+
+In `apps/server`:
+
+- `Vault` (`src/vault.ts`) runs every mutation under one lock as pull, change, commit, push. `writeOutcome(current, incoming, precondition)` is the whole write decision.
+- `GitSync` (`src/gitSync.ts`) fetches, fast-forwards or replays unpushed commits onto the remote's history, and pushes with retry.
+- `VaultPath` (`src/paths.ts`) is a path that passed validation; only such paths reach the working clone.
+- `DocIndex` (`src/docIndex.ts`) gives each note a stable `docId` that follows renames, for the reserved collaboration channel.
+- `BlobStore` (`src/store.ts`) is the storage interface for server state outside git, with `LocalDiskStore`; it is the seam for Object Storage.
+
 ### Vault Scanning (Rust)
 
 `vault::scan_vault(path)` in `src-tauri/src/vault/mod.rs`:

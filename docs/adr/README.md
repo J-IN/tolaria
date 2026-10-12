@@ -238,3 +238,4 @@ proposed → active → superseded
 | [0183](0183-normalize-stale-prosemirror-selection-boundaries.md) | Normalize stale ProseMirror selection boundaries | active |
 | [0184](0184-host-compatible-appimage-library-boundary.md) | Host-compatible AppImage library boundary | active |
 | [0185](0185-tolaria-web-target-and-vault-backend-seam.md) | Tolaria Web target and VaultBackend seam | active |
+| [0186](0186-tolaria-remote-file-service-and-protocol.md) | Tolaria remote: git-backed file service and versioned protocol | active |
