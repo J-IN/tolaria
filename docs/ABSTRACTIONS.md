@@ -471,6 +471,16 @@ The renderer keeps app shortcuts platform-exact where they overlap with native d
 
 ## File System Integration
 
+### VaultBackend
+
+`VaultBackend` (`src/lib/vaultBackend/types.ts`, ADR 0185) is the storage abstraction between the shell and wherever a vault lives. `kind` is `tauri`, `mock` or `remote`.
+
+- `files` is the plain file path. `write(path, content, { baseRevision })` writes only when the stored file is still at that revision and otherwise returns `{ status: 'conflict', current }`; `baseRevision: null` means create; omitting it is the explicit last-write-wins fallback. A `VaultRevision` is an opaque token: a content hash for local and mock stores, a server-issued ETag for the remote.
+- `collab` is the collaborative document channel. `openDoc(path)` returns `doc`, `fragment`, `provider` and `awareness` (the inputs of BlockNote's `collaboration` option), a `synced` promise and `close()`. Backends without collaboration expose `collab: null`. Markdown files stay canonical; the live document is the primary write path where it exists.
+- `capabilities` (`collaboration`, `atomicRevisions`, `attachments`) and `interfaceVersion` let callers adapt without checking `isTauri()`.
+
+The desktop and mock backends implement only `files`, through the existing commands. Nothing in the app is routed through the interface yet.
+
 ### Vault Scanning (Rust)
 
 `vault::scan_vault(path)` in `src-tauri/src/vault/mod.rs`:

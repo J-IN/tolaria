@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This folder contains Architecture Decision Records (ADRs) for the Laputa app.
+This folder contains Architecture Decision Records (ADRs) for the Tolaria app.
 
 ## Format
 
@@ -237,3 +237,4 @@ proposed → active → superseded
 | [0182](0182-app-owned-cross-platform-pdf-rendering.md) | App-owned cross-platform PDF rendering | active |
 | [0183](0183-normalize-stale-prosemirror-selection-boundaries.md) | Normalize stale ProseMirror selection boundaries | active |
 | [0184](0184-host-compatible-appimage-library-boundary.md) | Host-compatible AppImage library boundary | active |
+| [0185](0185-tolaria-web-target-and-vault-backend-seam.md) | Tolaria Web target and VaultBackend seam | active |

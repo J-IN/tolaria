@@ -279,7 +279,7 @@ commands:
             set -euo pipefail
             source /tmp/tolaria-release/release.env
             if [[ "${SKIP_RELEASE:-false}" == "true" ]]; then
-              echo "Release skipped because this push only changed CI or site files."
+              echo "Release skipped because this push only changed CI, site, or Tolaria Web files."
               circleci-agent step halt
             fi
 
@@ -963,7 +963,7 @@ jobs:
               $release[$name] = $value
             }
             if ($release["SKIP_RELEASE"] -eq "true") {
-              Write-Host "Release skipped because this push only changed CI or site files."
+              Write-Host "Release skipped because this push only changed CI, site, or Tolaria Web files."
               circleci-agent step halt
             }
       - run:
