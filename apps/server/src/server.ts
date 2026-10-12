@@ -1,5 +1,9 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { isSupportedProtocolVersion, PROTOCOL_HEADER } from '../../../packages/protocol/src/index.ts'
+import { DEFAULT_FLUSH_POLICY, type FlushPolicy } from './collab/flush.ts'
+import { CollabHub } from './collab/hub.ts'
+import { TicketBook } from './collab/tickets.ts'
+import { attachCollab } from './collab/upgrade.ts'
 import { DocIndex } from './docIndex.ts'
 import { VaultError } from './errors.ts'
 import { errorReply, isAuthorized, type Reply, readBody, send, singleHeader } from './httpIo.ts'
@@ -14,7 +18,19 @@ export interface ServerOptions {
   token: string
   maxBodyBytes: number
   log?: (message: string) => void
+  /** Settings of the collaboration channel; `false` leaves it reserved and unserved. */
+  collab?: CollabOptions | false
 }
+
+export interface CollabOptions {
+  policy?: FlushPolicy
+  /** How long a document without clients stays open. */
+  lingerMs?: number
+}
+
+const DEFAULT_LINGER_MS = 30_000
+/** What to do before the HTTP server of a vault stops, by server. */
+const SHUTDOWN = new WeakMap<Server, () => Promise<void>>()
 
 const HEALTH_PATH = '/healthz'
 
@@ -61,11 +77,46 @@ export async function createVaultServer(options: ServerOptions): Promise<Server>
   const { files } = await vault.list()
   await docs.reconcile(files.map((file) => file.path as VaultPath).filter(isNote))
   vault.onChange((changes) => docs.apply(changes))
-  const services: Services = { vault, docs, collab: false }
+  const tickets = options.collab === false ? undefined : new TicketBook()
+  const services: Services = { vault, docs, collab: tickets !== undefined, tickets }
 
-  return createServer((request: IncomingMessage, response: ServerResponse) => {
+  const server = createServer((request: IncomingMessage, response: ServerResponse) => {
     answer(request, services, options)
       .catch((error: unknown) => failure(error, log))
       .then((reply) => send(response, reply))
   })
+  if (tickets) serveCollab(server, { options, docs, tickets, log })
+  return server
+}
+
+interface CollabParts {
+  options: ServerOptions
+  docs: DocIndex
+  tickets: TicketBook
+  log(message: string): void
+}
+
+function serveCollab(server: Server, { options, docs, tickets, log }: CollabParts): void {
+  const { vault, store, token } = options
+  const settings = options.collab || {}
+  const hub = new CollabHub({
+    vault,
+    docs,
+    store,
+    log,
+    policy: settings.policy ?? DEFAULT_FLUSH_POLICY,
+    lingerMs: settings.lingerMs ?? DEFAULT_LINGER_MS,
+  })
+  const sockets = attachCollab(server, { hub, tickets, docs, token, log, maxMessageBytes: options.maxBodyBytes })
+  SHUTDOWN.set(server, async () => {
+    await hub.close()
+    sockets.close()
+  })
+}
+
+/** Stops a vault server: open documents are written to their files first. */
+export async function closeVaultServer(server: Server): Promise<void> {
+  await SHUTDOWN.get(server)?.()
+  server.close()
+  server.closeAllConnections()
 }

@@ -485,6 +485,8 @@ The desktop and mock backends implement only `files`, through the existing comma
 
 `packages/protocol` (ADR 0186) defines what a `remote` backend speaks: `PROTOCOL_VERSION`, the `/v1` routes, capabilities, and the request and response shapes (`FileEntry`, `WriteResult`, `RenameRequest`, `SearchResponse`, `ErrorBody`). A file's `etag` is its git blob id and maps to the seam's `VaultRevision`; `WriteResult.outcome` is `created`, `updated`, `unchanged`, `recreated` or `conflict`, and a `conflict` carries the path of the conflict copy and the `current` revision of the original.
 
+Collaboration (ADR 0187) adds, in `packages/markdown-yjs`: `NoteCodec` (markdown to and from a `tolaria.blocknote/1` Y.Doc; `fileContent` writes an edit back over the source file's bytes), `merge3` and `reconcile` (three-way line merge and the adopt, merge or conflict decision), `patchBlocks` (changes a live document block by block). In `apps/server/src/collab`: `Room` (a document and its peers), `NoteSession` (the link between a room and its file: `flush`, `fileChanged`), `CollabHub` (rooms by `docId`), `FlushScheduler` and `FlushPolicy`, `TicketBook`, `SnapshotStore`. `Vault.update(path, produce)` computes a file's new content under the vault lock, after the pull. In `packages/collab-client`: `CollabProvider` (status `connecting`, `syncing`, `synced`, `offline`, `closed`) and `createRemoteVaultBackend`, whose `collab.openDoc` returns the `doc`, `fragment`, `provider` and `awareness` that BlockNote's `collaboration` option takes.
+
 In `apps/server`:
 
 - `Vault` (`src/vault.ts`) runs every mutation under one lock as pull, change, commit, push. `writeOutcome(current, incoming, precondition)` is the whole write decision.

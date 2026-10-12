@@ -1,5 +1,6 @@
 import { isIP } from 'node:net'
 import { join, resolve } from 'node:path'
+import { DEFAULT_FLUSH_POLICY, type FlushPolicy } from './collab/flush.ts'
 
 export interface ServerConfig {
   token: string
@@ -13,6 +14,8 @@ export interface ServerConfig {
   /** Directory of server state that is not in git (doc index, later Y.Doc snapshots). */
   stateDir: string
   maxBodyBytes: number
+  /** Null when the collaboration channel is switched off. */
+  collab: { policy: FlushPolicy; lingerMs: number } | null
 }
 
 type Env = Record<string, string | undefined>
@@ -21,6 +24,8 @@ const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = 8787
 const DEFAULT_MAX_BODY_BYTES = 25 * 1024 * 1024
 const MIN_TOKEN_LENGTH = 16
+const DEFAULT_LINGER_MS = 30_000
+const MAX_DELAY_MS = 24 * 60 * 60 * 1000
 const LOOPBACK_NAMES = new Set(['localhost', '::1'])
 
 function setting(env: Env, name: string): string | undefined {
@@ -60,6 +65,18 @@ function bindHost(env: Env): string {
   )
 }
 
+function collabSettings(env: Env): ServerConfig['collab'] {
+  if (setting(env, 'TOLARIA_COLLAB') === '0') return null
+  const { idleMs, maxWaitMs } = DEFAULT_FLUSH_POLICY
+  return {
+    policy: {
+      idleMs: positiveInteger(env, 'TOLARIA_COLLAB_IDLE_MS', idleMs, MAX_DELAY_MS),
+      maxWaitMs: positiveInteger(env, 'TOLARIA_COLLAB_MAX_WAIT_MS', maxWaitMs, MAX_DELAY_MS),
+    },
+    lingerMs: positiveInteger(env, 'TOLARIA_COLLAB_LINGER_MS', DEFAULT_LINGER_MS, MAX_DELAY_MS),
+  }
+}
+
 /** Reads the configuration from the environment. Throws with a message fit for the operator. */
 export function loadConfig(env: Env): ServerConfig {
   const token = requiredToken(env)
@@ -73,5 +90,6 @@ export function loadConfig(env: Env): ServerConfig {
     vaultDir: join(dataDir, 'vault'),
     stateDir: join(dataDir, 'state'),
     maxBodyBytes: positiveInteger(env, 'TOLARIA_SERVER_MAX_BODY_BYTES', DEFAULT_MAX_BODY_BYTES, 2 ** 31),
+    collab: collabSettings(env),
   }
 }

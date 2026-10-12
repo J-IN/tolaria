@@ -2,7 +2,7 @@
 // No runtime dependencies and no Node or DOM APIs: the server and the web client import it as-is.
 
 /** `major.minor`. Minor versions only add; a different major is a different protocol. */
-export const PROTOCOL_VERSION = '1.0'
+export const PROTOCOL_VERSION = '1.1'
 export const PROTOCOL_MAJOR = 1
 /** Sent by the server on every response; clients may send it to assert the major they speak. */
 export const PROTOCOL_HEADER = 'tolaria-protocol-version'
@@ -17,8 +17,10 @@ export const ROUTES = {
   rename: `${API_PREFIX}/rename`,
   search: `${API_PREFIX}/search`,
   sync: `${API_PREFIX}/sync`,
-  /** Reserved websocket channel: `${collabDocs}/<docId>` carries the y-protocols sync of one note. */
+  /** Websocket channel: `${collabDocs}/<docId>` carries the y-protocols sync of one note. */
   collabDocs: `${API_PREFIX}/collab/docs`,
+  /** Issues a short-lived ticket that opens one websocket, for clients that cannot send headers. */
+  collabTickets: `${API_PREFIX}/collab/tickets`,
 } as const
 
 /**
@@ -33,6 +35,50 @@ export const DOC_BLOCKS_FRAGMENT = 'blocks'
 export const DOC_FRONTMATTER_FIELD = 'frontmatter'
 /** Name of the `Y.Map` holding `format` and `baseRevision` (etag of the markdown last reconciled). */
 export const DOC_META_MAP = 'meta'
+/** Keys of the `meta` map. */
+export const DOC_META = {
+  format: 'format',
+  /** Etag of the markdown file the document was last reconciled with. */
+  baseRevision: 'baseRevision',
+  /** Path of the conflict copy holding edits that could not be merged with the file. */
+  conflictCopy: 'conflictCopy',
+} as const
+
+/** First byte (a varint) of every websocket message, as in y-websocket. */
+export const COLLAB_MESSAGE = { sync: 0, awareness: 1, queryAwareness: 3 } as const
+/**
+ * Largest websocket message either side accepts. A server may set a lower limit; a larger
+ * message is refused before it is decoded and the connection is closed.
+ */
+export const COLLAB_MAX_MESSAGE_BYTES = 16 * 1024 * 1024
+/** Query parameter carrying a ticket on the websocket URL. */
+export const COLLAB_TICKET_PARAM = 'ticket'
+/** Websocket close codes the server uses beyond the standard ones. */
+export const COLLAB_CLOSE = {
+  /** The message could not be read. */
+  invalidMessage: 4400,
+  /** The note of this document was deleted. */
+  gone: 4410,
+  /** A change the connection sent is not a valid change to this kind of document. */
+  rejectedChange: 4422,
+} as const
+
+export type CollabAccess = 'read' | 'write'
+
+export interface CollabTicketRequest {
+  docId: string
+  /** `read` joins without the ability to edit. Defaults to `write`. */
+  access?: CollabAccess
+}
+
+export interface CollabTicketResponse {
+  ticket: string
+  /** ISO 8601 time after which the ticket is refused. */
+  expiresAt: string
+  /** Websocket path to open, without the ticket parameter. */
+  path: string
+  access: CollabAccess
+}
 
 export const FILE_CAPABILITIES = [
   'files.read',
@@ -45,7 +91,7 @@ export const FILE_CAPABILITIES = [
   'docs.ids',
 ] as const
 /** Advertised only by servers that serve the collaboration channel. */
-export const COLLAB_CAPABILITIES = ['collab.yjs', 'collab.awareness'] as const
+export const COLLAB_CAPABILITIES = ['collab.yjs', 'collab.awareness', 'collab.tickets'] as const
 
 export type Capability =
   | (typeof FILE_CAPABILITIES)[number]
@@ -156,6 +202,7 @@ export const ERROR_CODES = [
   'payload_too_large',
   'unsupported_protocol_version',
   'not_implemented',
+  'upgrade_required',
   'internal',
 ] as const
 

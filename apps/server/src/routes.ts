@@ -1,6 +1,7 @@
 import type { IncomingHttpHeaders } from 'node:http'
 import {
   COLLAB_CAPABILITIES,
+  type CollabAccess,
   DOC_BLOCKS_FRAGMENT,
   DOC_FORMAT,
   DOC_FRONTMATTER_FIELD,
@@ -12,6 +13,7 @@ import {
   type VaultResponse,
   type WriteResult,
 } from '../../../packages/protocol/src/index.ts'
+import type { TicketBook } from './collab/tickets.ts'
 import type { DocIndex } from './docIndex.ts'
 import { VaultError } from './errors.ts'
 import { entityTag, errorReply, quoted, type Reply, singleHeader } from './httpIo.ts'
@@ -23,6 +25,8 @@ export interface Services {
   docs: DocIndex
   /** True once the collaboration channel is served, not only reserved. */
   collab: boolean
+  /** Present when the collaboration channel is served. */
+  tickets?: TicketBook
 }
 
 export interface ApiRequest {
@@ -177,8 +181,29 @@ async function sync(_request: ApiRequest, { vault }: Services): Promise<Reply> {
   return { status: 200, body: await vault.syncNow() }
 }
 
-async function collabReserved(): Promise<Reply> {
-  throw new VaultError(501, 'not_implemented', 'the collaboration channel is reserved and not served yet')
+function collabAccess(value: unknown): CollabAccess {
+  if (value === undefined || value === 'write') return 'write'
+  if (value === 'read') return 'read'
+  throw invalidRequest('access must be "read" or "write"')
+}
+
+function collabNotServed(): VaultError {
+  return new VaultError(501, 'not_implemented', 'this server does not serve the collaboration channel')
+}
+
+/** The channel is a websocket: a plain request for it gets told so. */
+async function collabDocument(_request: ApiRequest, { collab }: Services): Promise<Reply> {
+  if (!collab) throw collabNotServed()
+  const refused = new VaultError(426, 'upgrade_required', 'open this route as a websocket')
+  return { ...errorReply(refused), headers: { upgrade: 'websocket', connection: 'Upgrade' } }
+}
+
+async function issueTicket(request: ApiRequest, { docs, tickets }: Services): Promise<Reply> {
+  if (!tickets) throw collabNotServed()
+  const body = jsonObject(await request.body())
+  const docId = optionalString(body.docId, 'docId') ?? ''
+  if (!docs.pathOf(docId)) throw new VaultError(404, 'not_found', 'no such document')
+  return { status: 201, body: tickets.issue({ docId, access: collabAccess(body.access) }) }
 }
 
 const FILE_METHODS: Methods = new Map([
@@ -186,13 +211,14 @@ const FILE_METHODS: Methods = new Map([
   ['PUT', writeFile],
   ['DELETE', deleteFile],
 ])
-const COLLAB_METHODS: Methods = new Map([['GET', collabReserved]])
+const COLLAB_METHODS: Methods = new Map([['GET', collabDocument]])
 const EXACT_ROUTES = new Map<string, Methods>([
   [ROUTES.vault, new Map([['GET', describeVault]])],
   [ROUTES.files, new Map([['GET', listFiles]])],
   [ROUTES.rename, new Map([['POST', renameFile]])],
   [ROUTES.search, new Map([['GET', search]])],
   [ROUTES.sync, new Map([['POST', sync]])],
+  [ROUTES.collabTickets, new Map([['POST', issueTicket]])],
 ])
 
 function decodedPath(encoded: string): VaultPath {

@@ -41,6 +41,14 @@ describe('DocIndex', () => {
     expect(docs.docId('a.md')).toBeUndefined()
   })
 
+  it('finds the note of a document id, wherever it moved', async () => {
+    const id = docs.docId('a.md') as string
+    await docs.apply([{ kind: 'rename', from: at('a.md'), to: at('archive/a.md') }])
+
+    expect(docs.pathOf(id)).toBe('archive/a.md')
+    expect(docs.pathOf('unknown')).toBeUndefined()
+  })
+
   it('drops the id when a note is deleted or stops being a note', async () => {
     await docs.apply([{ kind: 'delete', path: at('a.md') }])
     await docs.apply([{ kind: 'rename', from: at('b.md'), to: at('b.txt') }])

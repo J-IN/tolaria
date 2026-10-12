@@ -1,5 +1,5 @@
 import { loadConfig } from './config.ts'
-import { createVaultServer } from './server.ts'
+import { closeVaultServer, createVaultServer } from './server.ts'
 import { LocalDiskStore } from './store.ts'
 import { Vault } from './vault.ts'
 
@@ -20,11 +20,11 @@ async function main(): Promise<void> {
     store: new LocalDiskStore(config.stateDir),
     token: config.token,
     maxBodyBytes: config.maxBodyBytes,
+    collab: config.collab ?? false,
     log,
   })
   const stop = (): void => {
-    server.close()
-    server.closeAllConnections()
+    closeVaultServer(server).catch((error: unknown) => log(`shutdown failed: ${String(error)}`))
   }
   process.once('SIGINT', stop)
   process.once('SIGTERM', stop)

@@ -45,6 +45,26 @@ export interface Timings {
 
 export type TimedWriteResult = WriteResult & { timings: Timings }
 
+/** The stored version of a file, handed to a `FileProducer`. */
+export interface StoredFile {
+  bytes: Buffer
+  etag: Etag
+}
+
+/** Computes the new content of a file from what is stored (null: no such file), or null to skip. */
+export type FileProducer = (current: StoredFile | null) => Promise<Uint8Array | null>
+
+interface PendingWrite {
+  path: VaultPath
+  bytes: Uint8Array
+  precondition: WritePrecondition
+}
+
+interface PullClock {
+  started: number
+  pulled: number
+}
+
 /** Called with the vault lock held, for every change to the vault's files. */
 export type ChangeListener = (changes: VaultChange[]) => Promise<void>
 
@@ -142,22 +162,43 @@ export class Vault {
     return this.locked(async () => {
       const started = performance.now()
       await this.sync.pull()
-      const pulled = performance.now()
-      const stored = await this.store(path, bytes, precondition)
-      const committed = performance.now()
-
-      this.sync.relocated.clear()
-      const pushed = await this.sync.push()
-      // Someone pushed the same file between our fetch and our push: upstream keeps the path.
-      const moved = this.sync.relocated.get(stored.path)
-      const placed: Placement = moved ? { outcome: 'conflict', path: moved } : stored
-      const timings = {
-        pullMs: pulled - started,
-        commitMs: committed - pulled,
-        pushMs: performance.now() - committed,
-      }
-      return { ...(await this.writeResult(path, bytes, placed, pushed)), timings }
+      return this.storeAndPush({ path, bytes, precondition }, { started, pulled: performance.now() })
     })
+  }
+
+  /**
+   * Rewrites a file with content computed from its current state. `produce` runs under the
+   * lock and after the pull, so what it is given is what the write replaces: a change from
+   * the git remote cannot slip in between. Returning null leaves the file alone.
+   */
+  update(path: VaultPath, produce: FileProducer): Promise<TimedWriteResult | null> {
+    return this.locked(async () => {
+      const started = performance.now()
+      await this.sync.pull()
+      const pulled = performance.now()
+      const current = await this.repo.readIfExists(path)
+      const bytes = await produce(current ? { bytes: current, etag: blobEtag(current) } : null)
+      if (!bytes) return null
+      const precondition: WritePrecondition = current ? { kind: 'match', etag: blobEtag(current) } : { kind: 'absent' }
+      return this.storeAndPush({ path, bytes, precondition }, { started, pulled })
+    })
+  }
+
+  private async storeAndPush({ path, bytes, precondition }: PendingWrite, clock: PullClock): Promise<TimedWriteResult> {
+    const stored = await this.store(path, bytes, precondition)
+    const committed = performance.now()
+
+    this.sync.relocated.clear()
+    const pushed = await this.sync.push()
+    // Someone pushed the same file between our fetch and our push: upstream keeps the path.
+    const moved = this.sync.relocated.get(stored.path)
+    const placed: Placement = moved ? { outcome: 'conflict', path: moved } : stored
+    const timings = {
+      pullMs: clock.pulled - clock.started,
+      commitMs: committed - clock.pulled,
+      pushMs: performance.now() - committed,
+    }
+    return { ...(await this.writeResult(path, bytes, placed, pushed)), timings }
   }
 
   rename(from: VaultPath, to: VaultPath, ifMatch?: Etag): Promise<RenameResult> {

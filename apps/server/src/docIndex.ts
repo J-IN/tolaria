@@ -79,6 +79,14 @@ export class DocIndex {
     return this.docs.get(path as VaultPath)
   }
 
+  /** The note a document belongs to, wherever renames have taken it. */
+  pathOf(docId: DocId): VaultPath | undefined {
+    for (const [path, id] of this.docs) {
+      if (id === docId) return path
+    }
+    return undefined
+  }
+
   withDocIds(files: FileEntry[]): FileEntry[] {
     return files.map((file) => this.withDocId(file))
   }

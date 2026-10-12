@@ -455,3 +455,26 @@ describe('sync', () => {
     expect(await content('welcome.md')).toBe('first\n')
   })
 })
+
+describe('updating a file from its stored content', () => {
+  it('hands the producer the stored version, after pulling, and commits what it returns', async () => {
+    await fixture.desktop.commit('welcome.md', '# From the desktop\n')
+
+    const result = await vault.update(at('welcome.md'), async (current) => text(`${current?.bytes.toString('utf8')}appended\n`))
+
+    expect(result).toMatchObject({ outcome: 'updated', pushed: true })
+    expect(await fixture.desktop.read('welcome.md')).toBe('# From the desktop\nappended\n')
+  })
+
+  it('makes no commit when the producer returns null', async () => {
+    expect(await vault.update(at('welcome.md'), async () => null)).toBeNull()
+    expect(await fixture.desktop.log()).toEqual(['Seed vault'])
+  })
+
+  it('creates the file when there is none', async () => {
+    const result = await vault.update(at('new.md'), async (current) => text(current ? 'unexpected' : '# New\n'))
+
+    expect(result?.outcome).toBe('created')
+    expect(await content('new.md')).toBe('# New\n')
+  })
+})

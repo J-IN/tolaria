@@ -1,8 +1,8 @@
-# Tolaria remote protocol, version 1.0
+# Tolaria remote protocol, version 1.1
 
 The HTTP protocol between a Tolaria client and a server that hosts one vault as a git repository. It is written so that anyone can implement a compatible server (self-hosting) or client. The reference implementation is `apps/server`; the wire types are in `packages/protocol/src/index.ts` and are the source of truth when this document and the code disagree.
 
-Status: spike S3 (TOL-5). The file API below is implemented and tested. The collaboration channel is reserved and specified as a draft; it is not served yet.
+Status: spikes S3 (TOL-5) and S4 (TOL-8). The file API and the collaboration channel below are implemented and tested. Version 1.1 added the collaboration channel; it changed nothing in the file API of 1.0.
 
 ## Design rules
 
@@ -17,12 +17,12 @@ Status: spike S3 (TOL-5). The file API below is implemented and tested. The coll
 | Mechanism | Rule |
 |---|---|
 | Route prefix | `/v1`. A different major is a different prefix and a different protocol. |
-| `Tolaria-Protocol-Version` response header | Sent on every response, for example `1.0`. |
+| `Tolaria-Protocol-Version` response header | Sent on every response, for example `1.1`. |
 | `Tolaria-Protocol-Version` request header | Optional. If present and its major is not the server's, the server answers `400 unsupported_protocol_version`. |
 | Minor versions | Only add: new routes, new optional fields, new capabilities, new error codes. Clients must ignore fields and capabilities they do not know. |
 | Capabilities | `GET /v1/vault` lists what this server does. Clients check a capability before using a feature. |
 
-Capabilities in 1.0:
+Capabilities:
 
 | Capability | Meaning |
 |---|---|
@@ -31,7 +31,8 @@ Capabilities in 1.0:
 | `search.text` | `GET /v1/search`. |
 | `sync.git` | The vault is backed by a git remote; `pushed` and `POST /v1/sync` are meaningful. |
 | `docs.ids` | Notes carry a stable `docId`. |
-| `collab.yjs`, `collab.awareness` | The collaboration channel is served. Not advertised by this spike. |
+| `collab.yjs`, `collab.awareness` | The collaboration channel is served (since 1.1). |
+| `collab.tickets` | `POST /v1/collab/tickets` issues websocket tickets (since 1.1). |
 
 ## Authentication and transport
 
@@ -72,7 +73,8 @@ Every error has the same JSON body. `code` is stable; `message` is for people.
 | 413 | `payload_too_large` | The body exceeds the server's limit (25 MB by default). |
 | 428 | `precondition_required` | A write or delete without the header that says what it was based on. |
 | 500 | `internal` | Unexpected failure. The cause is logged, not returned. |
-| 501 | `not_implemented` | The reserved collaboration channel on a server that does not serve it. |
+| 426 | `upgrade_required` | A plain HTTP request to the websocket route of the collaboration channel. |
+| 501 | `not_implemented` | The collaboration channel on a server that does not serve it. |
 
 A write that ends in a conflict copy is not an error body: see `PUT` below.
 
@@ -82,10 +84,10 @@ A write that ends in a conflict copy is not an error body: see `PUT` below.
 
 ```json
 {
-  "protocolVersion": "1.0",
-  "capabilities": ["files.read", "files.write", "files.rename", "files.delete", "files.conflict-copy", "search.text", "sync.git", "docs.ids"],
+  "protocolVersion": "1.1",
+  "capabilities": ["files.read", "files.write", "files.rename", "files.delete", "files.conflict-copy", "search.text", "sync.git", "docs.ids", "collab.yjs", "collab.awareness", "collab.tickets"],
   "vault": { "name": "my-vault", "branch": "main", "head": "eea2db93a391d110c4707fa1f6c6078c2f39c1ca" },
-  "collab": { "available": false, "path": "/v1/collab/docs", "docFormat": "tolaria.blocknote/1", "blocksFragment": "blocks", "frontmatterField": "frontmatter", "metaMap": "meta" }
+  "collab": { "available": true, "path": "/v1/collab/docs", "docFormat": "tolaria.blocknote/1", "blocksFragment": "blocks", "frontmatterField": "frontmatter", "metaMap": "meta" }
 }
 ```
 
@@ -215,22 +217,69 @@ The server never force-pushes and never rewrites commits that reached the remote
 
 A `docId` is a random UUID the server assigns to each note. It identifies the note's collaborative document and stays with the note through renames, including renames made on the desktop and pulled in from git (detected with git's rename detection). It is server state, kept outside the repository; nothing is written into the note. A note that is deleted, or a conflict copy, gets a fresh id. If server state is lost, ids are reassigned and documents are rebuilt from the markdown files.
 
-## Reserved: the collaboration channel (draft, not served)
+## The collaboration channel (since 1.1)
 
-Reserved now so that adding it changes nothing above:
+A note can be opened as a live document that several clients edit at once. The markdown file stays the canonical form: the document is loaded from it, written back to it, and can always be rebuilt from it.
 
-| Item | Reservation |
-|---|---|
-| Route | `GET /v1/collab/docs/<docId>` with a websocket upgrade. This server answers `501 not_implemented`. |
-| Capabilities | `collab.yjs`, `collab.awareness`; `collab.available` in `GET /v1/vault`. |
-| Wire format | Standard y-protocols sync and awareness messages, so `y-websocket` and Hocuspocus clients connect unmodified. One room per `docId`. |
-| Document format | `tolaria.blocknote/1`: a `Y.XmlFragment` named `blocks` (what BlockNote's `collaboration.fragment` binds to), a `frontmatter` shared type for properties, and a `Y.Map` named `meta` holding `format` and `baseRevision`, the `etag` of the markdown the document was last reconciled with. |
-| Canonical form | The markdown file. A Y.Doc is a cache that can always be rebuilt from it. |
-| Persistence | Y.Doc snapshots keyed by `docId` in the server's blob store (`BlobStore` in `apps/server/src/store.ts`), which maps onto object storage. |
+### Document format `tolaria.blocknote/1`
 
-`Y.Text` holding raw markdown is deliberately not the format: BlockNote's collaboration binding needs a `Y.XmlFragment`, and a text document would lose cursors and block identity. The format string leaves room for other formats later.
+One Y.Doc per note, with three shared types:
 
-What the channel still needs is in `docs/web/s3-spike-report.md` and in `docs/web/s1-tauri-inventory.md` ("What the S3 server must provide").
+| Name | Type | Content |
+|---|---|---|
+| `blocks` | `Y.XmlFragment` | The note body, in the shape BlockNote's `collaboration.fragment` binds to (y-prosemirror). |
+| `frontmatter` | `Y.Text` | The frontmatter block exactly as in the file, delimiters and final newline included; empty when the note has none. |
+| `meta` | `Y.Map` | `format` (`tolaria.blocknote/1`); `baseRevision`, the `etag` of the file the document is in step with; `conflictCopy`, the path of a conflict copy holding edits that could not be merged with the file. Written by the server only: a client's change to this map is reverted. |
+
+`Y.Text` holding raw markdown is deliberately not the body format: BlockNote's binding needs a `Y.XmlFragment`, and a text document would lose cursors and block identity. The format string leaves room for other formats.
+
+### `POST /v1/collab/tickets`
+
+Browsers cannot put an `Authorization` header on a websocket. A client holding the bearer token asks for a ticket and opens the websocket with it.
+
+```json
+{ "docId": "bc1a7bc2-…", "access": "write" }
+```
+
+`access` is `write` (default) or `read`. Answer, `201`:
+
+```json
+{ "ticket": "kq3…", "expiresAt": "2026-10-12T19:04:00.000Z", "path": "/v1/collab/docs/bc1a7bc2-…", "access": "write" }
+```
+
+A ticket opens one websocket, for that document only, and expires after 60 seconds. `404 not_found` for an unknown `docId`, `400 invalid_request` for another `access`, `501 not_implemented` when the channel is not served.
+
+### `GET /v1/collab/docs/<docId>` (websocket)
+
+Authentication, one of:
+
+- `?ticket=<ticket>` from the route above;
+- `Authorization: Bearer <token>` on the upgrade request, for clients that can send headers. It gives `write` access.
+
+The upgrade is refused with `401` without valid credentials and with `404` for an unknown document. A request without an upgrade gets `426 upgrade_required`.
+
+Messages are binary and framed as y-websocket frames them, so stock Yjs providers can connect: a varint message type, then the payload.
+
+| Type | Payload | Meaning |
+|---|---|---|
+| `0` sync | y-protocols sync message: step 1 (state vector), step 2 (missing updates) or update | Both sides send step 1 on connect and answer the other's with step 2; afterwards every change is an update. A sync message of any other subtype is ignored. |
+| `1` awareness | y-protocols awareness update | Presence. Clients publish `{ "user": { "name": "…", "color": "#rrggbb" } }` and BlockNote adds the cursor. The server relays it and withdraws a client's presence when its socket closes. |
+| `3` awareness query | none | The server answers with the awareness of everyone present. |
+
+Unknown message types are ignored. A message larger than 16 MiB (or the server's lower limit) closes the connection with `1009`; so does sending more than one message's worth before the document has opened. Bytes that are not a message close it with `4400`. When the note is deleted the server closes the room with `4410`.
+
+The server tries every change on a copy of the document before applying it. A change that would add a shared type other than the three of the format, a node type or attribute the editor schema does not have, or an unknown mark, is not applied, and the connection that sent it is closed with `4422`. The `meta` map is written by the server only; a client's change to it is reverted.
+
+A `read` session receives everything and may publish awareness; sync step 2 and update messages from it are dropped.
+
+### What the server does with a document
+
+- **Open.** The document is loaded from its stored snapshot when there is one, otherwise built from the markdown file. A snapshot whose `baseRevision` is not the file's current `etag` is reconciled with the file first.
+- **Flush.** An edited document is written to its file, as one commit through the same write path as `PUT`, 5 seconds after the last edit or 60 seconds after the first unwritten one, when the last client has left, and when the server stops. Lines that were not edited keep the bytes they have in the file. A result identical to the file makes no commit. After a flush the server sets `meta.baseRevision`.
+- **Reconcile.** When the file changes underneath a live document (a commit pulled from the git remote): a document without unwritten edits takes the file's content; edits on different lines are merged three ways; edits on the same lines are forked, the file keeps its path, the document's version is committed as a conflict copy and `meta.conflictCopy` names it.
+- **Persist.** Snapshots are kept by `docId` in the server's blob store. They exist so that a reconnecting client and the server share one Yjs history; the markdown file remains what the document is rebuilt from.
+
+Measured cadence and the reasons are in `docs/web/s4-spike-report.md`.
 
 ## Differences from the surface sketched in S1
 
@@ -241,4 +290,5 @@ What the channel still needs is in `docs/web/s3-spike-report.md` and in `docs/we
 | `PUT` with no precondition is last-write-wins | `428`; `If-Match: *` asks for last-write-wins | An absent header should not silently overwrite. |
 | A stale `PUT` is rejected, conflict copy on request | Always a conflict copy, answered with `409` | The save is never lost, also when the client goes away. |
 | `POST /v1/files/{path}/rename`, rewrites wikilinks | `POST /v1/rename`, moves the file only | Unambiguous paths; link rewriting needs the note index. |
-| `GET /v1/entries`, `GET /v1/changes`, attachments routes, collab tickets | Not in 1.0 | Additive; listed as next steps in the spike report. Attachments already work as plain files through `/v1/files`. |
+| `GET /v1/entries`, `GET /v1/changes`, attachments routes | Not in 1.1 | Additive; listed as next steps in the spike reports. Attachments already work as plain files through `/v1/files`. |
+| Collab tickets | `POST /v1/collab/tickets`, since 1.1 | As sketched. |

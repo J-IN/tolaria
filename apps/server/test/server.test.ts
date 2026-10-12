@@ -32,6 +32,8 @@ async function start(maxBodyBytes = 1024 * 1024): Promise<void> {
     store: new LocalDiskStore(join(fixture.root, 'server', 'state')),
     token: TOKEN,
     maxBodyBytes,
+    // The file API on its own; the collaboration channel is covered in collabServer.test.ts.
+    collab: false,
     log: (message) => logs.push(message),
   })
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))

@@ -13,7 +13,8 @@ Basis: Luca's decisions of 10 Oct 2026 (client and protocol are AGPL, the hosted
 | Storage seam (`VaultBackend`) | `src/lib/vaultBackend` | AGPL-3.0-or-later | `refactoringhq/tolaria` |
 | Protocol specification | `docs/web/protocol.md` | AGPL-3.0-or-later (open question 1) | `refactoringhq/tolaria` |
 | Protocol types | `packages/protocol` | AGPL-3.0-or-later | `refactoringhq/tolaria` |
-| Markdown and Yjs serialisation | `packages/markdown-yjs` (not written yet) | AGPL-3.0-or-later | `refactoringhq/tolaria` |
+| Markdown and Yjs serialisation | `packages/markdown-yjs` | AGPL-3.0-or-later | `refactoringhq/tolaria` |
+| Collaboration client (websocket provider, remote `VaultBackend`) | `packages/collab-client` | AGPL-3.0-or-later | `refactoringhq/tolaria` |
 | File and Yjs sync server, single vault, bearer token from the environment | `apps/server` | AGPL-3.0-or-later | `refactoringhq/tolaria` |
 | Accounts and authentication (sign-up, login, sessions, OAuth, GitHub App) | not written | Proprietary | private `tolaria-cloud` |
 | Billing and payments | not written | Proprietary | private `tolaria-cloud` |

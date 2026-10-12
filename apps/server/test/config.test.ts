@@ -63,3 +63,28 @@ describe('isLoopbackHost', () => {
     expect(isLoopbackHost(host)).toBe(false)
   })
 })
+
+describe('collaboration settings', () => {
+  it('serves the channel by default, flushing after 5 s of quiet or 60 s of typing', () => {
+    expect(loadConfig({ TOLARIA_SERVER_TOKEN: TOKEN }).collab).toEqual({
+      policy: { idleMs: 5_000, maxWaitMs: 60_000 },
+      lingerMs: 30_000,
+    })
+  })
+
+  it('reads the cadence from the environment', () => {
+    const config = loadConfig({
+      TOLARIA_SERVER_TOKEN: TOKEN,
+      TOLARIA_COLLAB_IDLE_MS: '2000',
+      TOLARIA_COLLAB_MAX_WAIT_MS: '30000',
+      TOLARIA_COLLAB_LINGER_MS: '1000',
+    })
+
+    expect(config.collab).toEqual({ policy: { idleMs: 2_000, maxWaitMs: 30_000 }, lingerMs: 1_000 })
+  })
+
+  it('switches the channel off with TOLARIA_COLLAB=0 and refuses a cadence that is no number', () => {
+    expect(loadConfig({ TOLARIA_SERVER_TOKEN: TOKEN, TOLARIA_COLLAB: '0' }).collab).toBeNull()
+    expect(() => loadConfig({ TOLARIA_SERVER_TOKEN: TOKEN, TOLARIA_COLLAB_IDLE_MS: 'soon' })).toThrowError(/TOLARIA_COLLAB_IDLE_MS/)
+  })
+})
