@@ -477,7 +477,7 @@ That browser harness is a deterministic desktop command bridge, not real native 
 # Unit tests (fast, no browser)
 pnpm test
 
-# Unit tests with coverage (must pass ≥70%)
+# Unit tests with coverage (must pass ≥71%)
 pnpm test:coverage
 
 # Rust tests

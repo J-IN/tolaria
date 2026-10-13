@@ -27,7 +27,7 @@ const coverageRequire = createCoverageRequire()
 const { createCoverageMap } = coverageRequire('istanbul-lib-coverage')
 const libReport = coverageRequire('istanbul-lib-report')
 const reports = coverageRequire('istanbul-reports')
-const thresholdPercent = Number(process.env.VITEST_COVERAGE_THRESHOLD ?? '70')
+const thresholdPercent = Number(process.env.VITEST_COVERAGE_THRESHOLD ?? '71')
 const thresholds = {
   lines: metricThreshold('LINES'),
   functions: metricThreshold('FUNCTIONS'),

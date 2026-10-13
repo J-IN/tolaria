@@ -1,6 +1,6 @@
 /// <reference types="vitest/config" />
-import type { IncomingMessage, ServerResponse } from 'http'
-import path from 'path'
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import path from 'node:path'
 import {
   closeSync,
   fstatSync,
@@ -12,8 +12,8 @@ import {
   unlinkSync,
   writeFileSync,
   type Dirent,
-} from 'fs'
-import os from 'os'
+} from 'node:fs'
+import os from 'node:os'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -554,6 +554,10 @@ function commandVaultRename({ args }: VaultCommandContext): VaultCommandResponse
   return commandResponse({ payload: { new_path: newPath, updated_files: updatedFiles } })
 }
 
+function filenameRenameTitle(oldPath: string): string {
+  return parseMarkdownFile(oldPath)?.title ?? path.basename(oldPath, '.md')
+}
+
 function commandVaultRenameFilename({ args }: VaultCommandContext): VaultCommandResponse {
   const oldPath = commandString({ args, key: 'old_path' })
   if (!oldPath) return commandResponse({ payload: { error: 'Missing old path' }, statusCode: 400 })
@@ -568,7 +572,7 @@ function commandVaultRenameFilename({ args }: VaultCommandContext): VaultCommand
   }
 
   const vaultPath = commandString({ args, key: 'vault_path' })
-  const oldTitle = parseMarkdownFile(oldPath)?.title ?? path.basename(oldPath, '.md')
+  const oldTitle = filenameRenameTitle(oldPath)
   renameSync(oldPath, newPath)
   const updatedFiles = vaultPath ? updatePathWikilinks({ newPath, oldPath, oldTitle, vaultPath }) : 0
   return commandResponse({ payload: { new_path: newPath, updated_files: updatedFiles } })
@@ -840,7 +844,7 @@ async function renameVaultNoteFilename(req: IncomingMessage, res: ServerResponse
     return
   }
 
-  const oldTitle = parseMarkdownFile(oldPath)?.title ?? path.basename(oldPath, '.md')
+  const oldTitle = filenameRenameTitle(oldPath)
   renameSync(oldPath, newPath)
   const updatedFiles = vaultPath ? updatePathWikilinks({ newPath, oldPath, oldTitle, vaultPath }) : 0
   sendJson(res, { new_path: newPath, updated_files: updatedFiles })
@@ -1035,10 +1039,10 @@ export default defineConfig({
         'src/components/ui/card.tsx',
       ],
       thresholds: {
-        lines: 70,
-        functions: 70,
-        branches: 70,
-        statements: 70,
+        lines: 71,
+        functions: 71,
+        branches: 71,
+        statements: 71,
       },
     },
   },
