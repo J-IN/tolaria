@@ -104,6 +104,8 @@ chunk validate --remote lint
 
 For Playwright smoke, prefer the shared-server shard runner after setup:
 
+The smoke server scans `index.html` for desktop dependencies. Keep the separate web collaboration prototype out of this dependency scan: its workspace dependencies can abort prebundling and trigger page reloads during smoke interactions. Command-palette tests wait for mounted command routing and focus sidebar navigation before sending a single shortcut; editor tests wait for visible, enabled controls.
+
 ```bash
 chunk sidecar ssh --sidecar-id <playwright-sidecar-id> -- 'cd /home/user/tolaria && PLAYWRIGHT_CONCURRENCY=4 bash .chunk/run-playwright-shards.sh 8'
 ```
