@@ -4,6 +4,7 @@ import { expect, type Page, test } from "@playwright/test";
 import {
 	createFixtureVaultCopy,
 	openFixtureVault,
+	openFixtureVaultDesktopHarness,
 	removeFixtureVaultCopy,
 } from "../helpers/fixtureVault";
 
@@ -173,4 +174,48 @@ test("@smoke autosave waits for idle typing and persists the latest draft only",
 	});
 	expect(persisted.ok()).toBe(true);
 	expect(await persisted.json()).toEqual({ content: latestDraft });
+});
+
+test("@smoke rich autosave preserves a large imported CRLF note across typing pauses", async ({
+	page,
+}) => {
+	const file = path.join(tempVaultDir, "note", "imported-autosave.md");
+	const source =
+		"# Imported Autosave\r\n\r\n" +
+		Array.from(
+			{ length: 3000 },
+			(_, index) => `* Imported line ${index} with &amp; source spelling.\r\n`,
+		).join("");
+	const saved = await page.request.post("/api/vault/save", {
+		data: { path: file, content: source },
+	});
+	expect(saved.ok()).toBe(true);
+	const readSaved = async () => {
+		const response = await page.request.get("/api/vault/content", {
+			params: { path: file, vault_path: tempVaultDir },
+		});
+		expect(response.ok()).toBe(true);
+		return ((await response.json()) as { content: string }).content;
+	};
+	await openFixtureVaultDesktopHarness(page, tempVaultDir);
+	await openNote(page, "Imported Autosave");
+	const paragraph = page
+		.locator(".bn-block-content p")
+		.filter({ hasText: "Imported line 0 with" })
+		.first();
+	await expect(paragraph).toBeVisible();
+	await expect(page.locator('.bn-editor[contenteditable="true"]')).toBeVisible({
+		timeout: 30000,
+	});
+	await paragraph.click();
+	await page.keyboard.press("Home");
+	await page.keyboard.type("First ");
+	await expect(paragraph).toContainText("First Imported line 0");
+	await expect
+		.poll(readSaved, { timeout: 10000 })
+		.toBe(source.replace("Imported line 0", "First Imported line 0"));
+	await page.keyboard.type("Second ");
+	await expect
+		.poll(readSaved, { timeout: 10000 })
+		.toBe(source.replace("Imported line 0", "First Second Imported line 0"));
 });
