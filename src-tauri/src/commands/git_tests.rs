@@ -173,7 +173,12 @@ async fn desktop_remote_commands_report_no_remote_for_gitless_vault() {
 async fn desktop_git_metadata_commands_preserve_backend_results() {
     let (dir, vault) = create_initialized_vault();
     let workspace = git_workspace_info(vault.clone()).await.unwrap();
-    assert_eq!(workspace.git_root, Some(vault.clone()));
+    // macOS temp dirs resolve through /private, so compare canonical paths.
+    let canonical = |p: &str| fs::canonicalize(p).unwrap();
+    assert_eq!(
+        workspace.git_root.as_deref().map(canonical),
+        Some(canonical(&vault))
+    );
     assert_eq!(workspace.git_root_relation, "vault");
 
     let author = git_author_identity(vault.clone()).await.unwrap();
