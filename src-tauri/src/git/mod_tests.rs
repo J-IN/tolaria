@@ -379,6 +379,9 @@ fn test_git_launch_config_source_precedence() {
     }
 }
 
+#[path = "shell_config_tests.rs"]
+mod shell_config_tests;
+
 #[test]
 fn test_ensure_gitignore_creates_file() {
     let dir = TempDir::new().unwrap();

@@ -21,9 +21,12 @@ async fn note_content_commands_roundtrip_with_requested_vault() {
         "# Command Note\n".to_string(),
         Some(root.clone()),
     )
+    .await
     .unwrap();
     assert_eq!(
-        get_note_content(note.clone(), Some(root.clone())).unwrap(),
+        get_note_content(note.clone(), Some(root.clone()))
+            .await
+            .unwrap(),
         "# Command Note\n"
     );
 
@@ -34,7 +37,9 @@ async fn note_content_commands_roundtrip_with_requested_vault() {
     )
     .await
     .unwrap();
-    assert!(!sync_note_title(note.clone(), Some(root.clone())).unwrap());
+    assert!(!sync_note_title(note.clone(), Some(root.clone()))
+        .await
+        .unwrap());
 
     save_note_content(
         note.clone(),
@@ -43,10 +48,36 @@ async fn note_content_commands_roundtrip_with_requested_vault() {
     )
     .await
     .unwrap();
-    assert!(sync_note_title(note.clone(), Some(root.clone())).unwrap());
+    assert!(sync_note_title(note.clone(), Some(root.clone()))
+        .await
+        .unwrap());
     assert!(get_note_content(note, Some(root))
+        .await
         .unwrap()
         .contains("title: Command Note"));
+}
+
+#[tokio::test]
+async fn note_content_commands_run_their_io_off_the_calling_thread() {
+    let dir = TempDir::new().unwrap();
+    let root = vault_root(&dir);
+    let note = note_path(&dir, "async-note.md");
+
+    create_note_content(note.clone(), "# Async\n".to_string(), Some(root.clone()))
+        .await
+        .unwrap();
+
+    assert_eq!(
+        get_note_content(note.clone(), Some(root.clone()))
+            .await
+            .unwrap(),
+        "# Async\n"
+    );
+    assert!(
+        validate_note_content(note, "# Async\n".to_string(), Some(root))
+            .await
+            .unwrap()
+    );
 }
 
 #[tokio::test]
@@ -67,7 +98,7 @@ async fn note_content_commands_accept_windows_sensitive_valid_segments() {
     .unwrap();
 
     assert_eq!(
-        get_note_content(note, Some(root)).unwrap(),
+        get_note_content(note, Some(root)).await.unwrap(),
         "# Windows-Sensitive Path\n\nBody\n"
     );
 }
@@ -111,14 +142,16 @@ fn startup_snapshot_visibility_keeps_snapshot_and_filters_ignored_entries() {
     assert!(!visible.iter().any(|entry| entry.filename == "ignored.md"));
 }
 
-#[test]
-fn commands_reject_paths_outside_requested_vault() {
+#[tokio::test]
+async fn commands_reject_paths_outside_requested_vault() {
     let vault = TempDir::new().unwrap();
     let outside = TempDir::new().unwrap();
     let outside_note = outside.path().join("outside.md");
     fs::write(&outside_note, "# Outside\n").unwrap();
 
-    let error = get_note_content(outside_note, Some(vault.path().to_path_buf())).unwrap_err();
+    let error = get_note_content(outside_note, Some(vault.path().to_path_buf()))
+        .await
+        .unwrap_err();
     assert!(error.contains("Path must stay inside the active vault"));
 
     let folder_error =
@@ -208,15 +241,21 @@ fn file_manager_reveal_rejects_missing_paths() {
     assert!(error.contains("missing"));
 }
 
-#[test]
-fn validate_note_content_compares_against_disk() {
+#[tokio::test]
+async fn validate_note_content_compares_against_disk() {
     let dir = TempDir::new().unwrap();
     let root = vault_root(&dir);
     let note = note_path(&dir, "note.md");
     fs::write(&note, "# Fresh\n").unwrap();
 
     assert!(
-        validate_note_content(note.clone(), "# Fresh\n".to_string(), Some(root.clone()),).unwrap()
+        validate_note_content(note.clone(), "# Fresh\n".to_string(), Some(root.clone()),)
+            .await
+            .unwrap()
     );
-    assert!(!validate_note_content(note, "# Stale\n".to_string(), Some(root)).unwrap());
+    assert!(
+        !validate_note_content(note, "# Stale\n".to_string(), Some(root))
+            .await
+            .unwrap()
+    );
 }
