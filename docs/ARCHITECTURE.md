@@ -1262,3 +1262,7 @@ Features that work on both platforms without changes:
 **Capabilities:** `src-tauri/capabilities/default.json` targets desktop; `mobile.json` targets iOS/Android with a minimal permission set.
 
 **Detailed feasibility report:** `docs/IPAD-PROTOTYPE.md`
+
+### React 19 update-depth compatibility
+
+The shared Radix primitives require `radix-ui` 1.6.1 or newer for stable composed refs in Slot, Popper, and overlay layers. Earlier versions detach and reattach state-setting refs during ordinary sidebar action rerenders, which can feed React update-depth loops. The virtualized note list requires `react-virtuoso` 4.18.5 or newer so React 19 uses `useSyncExternalStore` instead of the legacy state/layout-effect subscription. Keep these compatibility floors when updating dependencies. The trigger-ref regression and the real-Virtuoso title-update test complement the create/edit smoke flow; the general unit-test setup otherwise mocks Virtuoso.
