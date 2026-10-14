@@ -938,6 +938,8 @@ if (isTauri()) {
 
 The mock layer includes sample entries across all entity types, full markdown content with realistic frontmatter, mock git history, mock AI responses, and mock pulse commits. It also tracks per-vault remote state so browser-mode Getting Started and empty-vault flows now behave like the desktop app: local-only until `git_add_remote` succeeds.
 
+The optional Vite dev vault API is implemented in `scripts/vault-api-plugin.ts` (HTTP route table), `scripts/vault-api-commands.ts` (command dispatch, mutations, and shared wikilink updates), and `scripts/vault-api-data.ts` (filesystem reads, frontmatter parsing, and search). `vite.config.ts` only installs the plugin. `pnpm test:dev-mock` checks the HTTP contract against temporary vaults; it also runs as part of `pnpm test`. These modules are development middleware and are not bundled into the app.
+
 Browser smoke tests can also override `window.__mockHandlers` before the app boots. The AutoGit smoke bridge uses that path directly for seeded saves so the mocked git dirty-state stays synchronized even when the optional browser vault API is serving note content.
 
 ### VaultBackend seam and the web target

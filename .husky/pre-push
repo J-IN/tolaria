@@ -197,9 +197,9 @@ if ! run_sidecar_automatic_checks; then
   pnpm build
   echo "  ✅ Build OK"
 
-  # ── 2. Frontend coverage (≥71%) — includes all unit tests ───────────────
+  # ── 2. Frontend coverage (≥72%) — includes all unit tests ───────────────
   echo ""
-  echo "📊 [2/6] Frontend tests + coverage (≥71%)..."
+  echo "📊 [2/6] Frontend tests + coverage (≥72%)..."
   FRONTEND_COVERAGE_CONCURRENCY="${FRONTEND_COVERAGE_CONCURRENCY:-1}" \
     node scripts/run-vitest-coverage-shards.mjs --silent
   echo "  ✅ Frontend coverage OK"
