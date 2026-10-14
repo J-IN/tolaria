@@ -248,13 +248,12 @@ pub async fn save_note_content(
     content: String,
     vault_path: Option<PathBuf>,
 ) -> Result<(), String> {
-    tokio::task::spawn_blocking(move || {
+    crate::commands::blocking::run_blocking(move || {
         with_writable_note_path(path, vault_path, |validated_path| {
             vault::save_note_content(validated_path, &content)
         })
     })
-    .await
-    .map_err(|e| format!("Task panicked: {e}"))?
+    .await?
 }
 
 pub(crate) fn create_note_content_blocking(
@@ -405,45 +404,41 @@ pub async fn download_remote_image_to_vault(
     vault_path: PathBuf,
     url: String,
 ) -> Result<String, String> {
-    tokio::task::spawn_blocking(move || {
+    crate::commands::blocking::run_blocking_labeled("Remote image task failed", move || {
         with_image_asset_scope(&app_handle, vault_path.as_path(), |requested_root| {
             vault::download_remote_image(requested_root, &url)
         })
     })
-    .await
-    .map_err(|error| format!("Remote image task failed: {error}"))?
+    .await?
 }
 
 #[tauri::command]
 pub async fn list_vault(path: PathBuf) -> Result<Vec<VaultEntry>, String> {
-    tokio::task::spawn_blocking(move || {
+    crate::commands::blocking::run_blocking(move || {
         with_expanded_vault_root(path.as_path(), scan_visible_vault_entries)
     })
-    .await
-    .map_err(|e| format!("Task panicked: {e}"))?
+    .await?
 }
 
 #[tauri::command]
 pub async fn read_vault_snapshot(path: PathBuf) -> Result<Option<Vec<VaultEntry>>, String> {
     let hide_gitignored = crate::settings::hide_gitignored_files_enabled();
-    tokio::task::spawn_blocking(move || {
+    crate::commands::blocking::run_blocking(move || {
         with_expanded_vault_root(path.as_path(), |vault_path| {
             let snapshot = vault::read_vault_snapshot(vault_path)?;
             Ok(snapshot
                 .map(|entries| filter_visible_vault_entries(vault_path, entries, hide_gitignored)))
         })
     })
-    .await
-    .map_err(|e| format!("Task panicked: {e}"))?
+    .await?
 }
 
 #[tauri::command]
 pub async fn list_vault_folders(path: PathBuf) -> Result<Vec<FolderNode>, String> {
-    tokio::task::spawn_blocking(move || {
+    crate::commands::blocking::run_blocking(move || {
         with_expanded_vault_root(path.as_path(), scan_visible_vault_folders)
     })
-    .await
-    .map_err(|e| format!("Task panicked: {e}"))?
+    .await?
 }
 
 #[cfg(test)]
