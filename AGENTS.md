@@ -4,17 +4,17 @@
 
 ### Mandatory-rule exception protocol
 
-Use an exception only when a required service or analyzer remains unavailable after one retry, or when satisfying the rule is technically impossible without increasing security or data-loss risk. The repository owner is the sole approver. Before proceeding, record the blocked command, evidence, affected files, risk, compensating check, approver, and an expiry of at most 72 hours in the Todoist task or final handoff; review and remove the exception within seven days. A preference, deadline, or failing quality gate is not sufficient exception criteria.
+Use an exception only when a required service or analyzer remains unavailable after one retry, or when satisfying the rule is technically impossible without increasing security or data-loss risk. The repository owner is the sole approver. Before proceeding, record the blocked command, evidence, affected files, risk, compensating check, approver, and an expiry of at most 72 hours in the Linear issue or final handoff; review and remove the exception within seven days. A preference, deadline, or failing quality gate is not sufficient exception criteria.
 
-### Task tracking (Todoist now, Linear after cutover)
+### Task tracking (Linear)
 
-**Transition note:** until the migration to Linear is announced, the Todoist Tolaria project remains the live queue (sections Open → In Progress → In Review, plus To Rework). Agents keep using Todoist for now; the Linear rules below apply only after cutover.
+**Linear is the only live queue (cutover 2026-10-15).** Desktop work lives in team Tolaria (`TOL`), project **Tolaria Desktop**; web work in project Tolaria Web. Do not create or move Todoist tasks. The old Todoist Tolaria project is legacy (its Draft section is being triaged separately); a completed Todoist card commented "Moved to Linear: TOL-n" points to its Linear issue.
 
-**Linear (after cutover)** — workspace Refactoring, team Tolaria, issue key `TOL`.
+**Linear** — workspace Refactoring, team Tolaria, issue key `TOL`.
 
 - Workflow: **Backlog** (not ready) → **Open** (ready for an agent) → **To Rework** (review failed: read the latest review comment and fix only that; pick these **before** Open) → **In Progress** (claimed) → **In Review** (pushed, awaiting Luca's QA) → **Done** / **Canceled** / **Duplicate**.
 - Claim an issue by moving it to In Progress **before** starting work, so agents never collide. Never start an issue that is already In Progress.
-- Labels: type `Bug` / `Feature` / `Improvement`; `mac-only` (leave for the Mac mini); Source group `Sentry` / `Canny` / `GitHub`.
+- Labels: type `Bug` / `Feature` / `Improvement`; `mac-only` (leave for the Mac mini); `linux-ok`; `agent-blocked` (always with a comment saying why it is stuck and what would unblock it); `dubious` and `contributor-pr` (Backlog, awaiting Luca); Source group `Sentry` / `Canny` / `GitHub`.
 - Reference the issue ID in commit messages, e.g. `fix: keep image width after restart (TOL-123)`.
 
 ### Start working on a task
@@ -26,7 +26,7 @@ Use an exception only when a required service or analyzer remains unavailable af
 - Check `docs/adr/` for relevant architecture decisions before structural choices
 - Check `docs/ARCHITECTURE.md` and `docs/ABSTRACTIONS.md` for relevant structural information
 - For UI tasks: study app visual language and components first. Prioritize reusing existing components, assets, and variables over recreating them.
-- If working on a Todoist task, add a comment: `🚀 Starting work on this task. [Brief description of approach]`
+- If working on a Linear issue, add a comment: `🚀 Starting work on this task. [Brief description of approach]`
 
 ### Commits & pushes
 
@@ -56,7 +56,7 @@ Use `pnpm l10n:translate:force` only when intentionally regenerating existing tr
 
 New features should emit a PostHog event so we can see whether users actually discover and use them. Skip instrumentation when the change has no meaningful user action or when a dedicated event would create noise; record that reason in the completion comment. If the correct instrumentation remains unclear, obtain repository-owner direction before release. Use clear, stable event names, avoid PII or note content, and include only safe metadata that helps evaluate adoption and failures.
 
-When adding or changing a meaningful user-facing feature, include the event name(s) in the Todoist completion comment alongside QA, docs, and code health. If intentionally not instrumenting a feature, explain why in the completion comment.
+When adding or changing a meaningful user-facing feature, include the event name(s) in the Linear completion comment alongside QA, docs, and code health. If intentionally not instrumenting a feature, explain why in the completion comment.
 
 ### Code health (mandatory)
 
@@ -138,7 +138,7 @@ bash ~/.openclaw/skills/tolaria-qa/scripts/screenshot.sh /tmp/qa-native.png
 
 Use computer-use/browser-control interaction for native UI QA when either tool is present in the current environment: click, hover, drag, select, scroll, and type the way a real user would with the mouse and trackpad. For every UI feature, test the primary mouse-driven path first, then verify each keyboard shortcut or keyboard-first workflow implemented or modified by the task. If neither interaction tool is present, run the scripted focus, screenshot, and shortcut checks and document that limitation.
 
-Use `osascript` for app focus, keyboard shortcuts, and keyboard-specific checks. **⚠️ WKWebView:** if an `osascript keystroke` fails to enter editor text, use computer use for the native editor interaction and rely on Playwright for deterministic text-input coverage. Write the result as a Todoist comment (✅ or ❌), or in the final handoff when no Todoist task exists.
+Use `osascript` for app focus, keyboard shortcuts, and keyboard-specific checks. **⚠️ WKWebView:** if an `osascript keystroke` fails to enter editor text, use computer use for the native editor interaction and rely on Playwright for deterministic text-input coverage. Write the result as a Linear comment (✅ or ❌), or in the final handoff when no Linear issue exists.
 
 ### Linux agent boxes (Hetzner / remote)
 
@@ -152,7 +152,7 @@ These rules apply when the agent runs on a Linux box (no macOS desktop, no `osas
 
 ### Release-readiness checklist
 
-Before pushing or moving a task to In Review, verify the release gates and add a **completion comment** to the Todoist task. Exception: when the work has no Todoist task, put the identical evidence in the final handoff and identify it as the release record. The record must include:
+Before pushing or moving a task to In Review, verify the release gates and add a **completion comment** to the Linear issue. Exception: when the work has no Linear issue, put the identical evidence in the final handoff and identify it as the release record. The record must include:
 
 - What was implemented (a few lines covering logic and UX/UI).
 - QA: what was tested and how (Playwright / native screenshot / osascript on macOS; Linux app driven with a throwaway vault on Linux agent boxes).
