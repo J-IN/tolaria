@@ -24,8 +24,17 @@ function isSpaceKey(event: KeyboardEvent): boolean {
     || event.keyCode === 32
 }
 
+function isTabKey(event: KeyboardEvent): boolean {
+  return event.key === 'Tab'
+    || event.code === 'Tab'
+    || event.keyCode === 9
+}
+
+// Tab/Shift+Tab nest or outdent list items; an IME (Chinese, Korean, Japanese)
+// can use them to move between candidates, so they must not reach the editor
+// while a composition is still open.
 function isCompositionEditorShortcutKey(event: KeyboardEvent): boolean {
-  return isEnterKey(event) || isSpaceKey(event)
+  return isEnterKey(event) || isSpaceKey(event) || isTabKey(event)
 }
 
 function isParagraphInput(event: InputEvent): boolean {
