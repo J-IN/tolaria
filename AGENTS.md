@@ -217,6 +217,48 @@ Use shadcn/ui components for user-facing interactive elements instead of raw HTM
 
 ## 3. Reference
 
+### Release notes
+
+Release notes live in `release-notes/<tag>.md` and are published to GitHub Releases and the public website.
+
+**Format:**
+- Every release note must start with frontmatter:
+  ```markdown
+  ---
+  type: Note
+  _organized: true
+  ---
+  ```
+- After frontmatter, write the user-facing content (features, improvements, fixes)
+- Use clear headings: `## New Features`, `## Improvements`, `## Stability and Fixes`
+- Use emojis and **bold** feature names for scanability
+- Write for end users, not developers
+
+**Frontmatter handling:**
+- The vault displays release notes as organized `Note` types
+- GitHub Release bodies and website copies automatically strip frontmatter via `scripts/strip-frontmatter.mjs`
+- Never expose frontmatter in user-facing surfaces
+
+**Creating a new release note:**
+```bash
+cat > release-notes/<tag>.md << 'EOF'
+---
+type: Note
+_organized: true
+---
+
+## New Features
+
+- 🎉 **Feature name** — Description.
+
+## Improvements
+
+- ✨ **Enhancement** — Description.
+EOF
+```
+
+The frontmatter ensures release notes are already organized when the Tolaria repo is opened as a vault, avoiding inbox clutter.
+
 ### macOS / Tauri gotchas
 
 - `Option+N` → special chars on macOS. Use `e.code` or `Cmd+N`
