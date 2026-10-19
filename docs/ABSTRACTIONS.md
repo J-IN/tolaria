@@ -975,6 +975,8 @@ interface SearchResult {
 
 The NoteList header search keeps its local title/snippet/property filtering for immediate scoped results, then augments the match set with `search_vault` hits from the visible workspace roots using the command's frontmatter-excluding search option. React stores only matching paths so body-only matches appear in the current list scope without a second content-read pass or rendering private matched text in note rows.
 
+`useNoteListDeletionFocus` snapshots the displayed note order and vault membership. When a displayed note is removed from the vault, it opens the next surviving displayed note, falling back to the previous note, and returns keyboard focus to the list after React updates selection. Filtering, sorting, loading, sidebar navigation, and path replacement during rename do not count as deletion. An empty result keeps the existing empty state. All deletion surfaces use the same list reconciliation.
+
 No indexing step required — search runs directly against the filesystem.
 
 ## Vault Management
