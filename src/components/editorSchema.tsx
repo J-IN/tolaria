@@ -17,6 +17,7 @@ import {
 	VideoBlock,
 	VideoToExternalHTML,
 } from "@blocknote/react";
+import type { ViewMutationRecord } from "@tiptap/pm/view";
 import {
 	type ComponentProps,
 	type KeyboardEvent,
@@ -470,7 +471,27 @@ const EmbeddedBlockSpec = createReactBlockSpec(embeddedBlockConfig, {
 	render: (props) => <HtmlBlock block={props.block} editor={props.editor} />,
 });
 
+function languageControlMutation(mutation: ViewMutationRecord): boolean {
+	return (
+		mutation.type !== "selection" &&
+		mutation.target instanceof Element &&
+		mutation.target.closest(
+			'.bn-block-content[data-content-type="codeBlock"] > div[contenteditable="false"]',
+		) !== null
+	);
+}
+
 const codeBlock = createCodeBlockSpec(createTolariaCodeBlockOptions());
+const renderCodeBlock = codeBlock.implementation.render;
+codeBlock.implementation.render = function (block, editor) {
+	const view = renderCodeBlock.call(this, block, editor);
+	return {
+		...view,
+		ignoreMutation: (mutation) =>
+			languageControlMutation(mutation) ||
+			view.ignoreMutation?.(mutation) === true,
+	};
+};
 const audioBlock = AudioBlockSpec();
 const embeddedBlock = EmbeddedBlockSpec();
 const mathBlock = MathBlock();

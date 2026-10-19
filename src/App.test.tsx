@@ -370,7 +370,7 @@ vi.mock('@blocknote/core', () => ({
   createFileBlockSpec: vi.fn(() => ({ implementation: { toExternalHTML: () => null } })),
   fileParse: vi.fn(() => undefined),
   BlockNoteSchema: { create: () => ({ extend: () => ({}) }) },
-  createCodeBlockSpec: vi.fn(() => ({})),
+  createCodeBlockSpec: vi.fn(() => ({ implementation: { render: vi.fn() } })),
   createExtension: (factory: unknown) => () => factory,
   createStyleSpec: vi.fn(() => ({})),
   createVideoBlockConfig: vi.fn(() => ({})), defaultInlineContentSpecs: {},
