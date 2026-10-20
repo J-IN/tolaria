@@ -21,12 +21,7 @@ function NoteListInner({
 	const model = useNoteListModel(props);
 	useNoteListDeletionFocus({
 		entries: props.entries,
-		visible: model.entitySelection
-			? [
-					model.entitySelection.entry,
-					...model.searchedGroups.flatMap((group) => group.entries),
-				]
-			: model.searched,
+		visible: model.visibleEntries,
 		selection: props.selection,
 		loading: props.loading ?? false,
 		openNote: props.onReplaceActiveTab,

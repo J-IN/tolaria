@@ -1168,3 +1168,7 @@ HTML vault expressions that read spreadsheet cells await the shared `src/utils/s
 Inline `/File` PDF attachments use `TolariaFileBlock` through `tolariaFileBlockSpec`, sharing `PdfFilePreview` with standalone file tabs. The BlockNote file wrapper retains upload, caption, and filename fallback controls; failed rendering emits `file_preview_failed` with only the PDF category. The existing file schema and external HTML/Markdown serialization stay unchanged. Image blocks keep their existing renderer. The durable Markdown preprocessing pipeline resolves portable attachment URLs against the active vault before rebuilding file blocks, so previews also load after an app restart.
 
 The editor schema reuses the durable embedded-HTML codec through `embeddedBlockParsing` for HTML code elements. Attachment Markdown parsing handles captioned and uncaptioned links separately, retaining escaped labels and destinations without a nested optional-caption regular expression.
+
+## Visible note order
+
+`useNoteListModel` obtains one memoized `visibleEntries` array from `useVisibleNotesSync`: the entity followed by searched relationship groups in neighborhood views, or the searched list elsewhere. Keyboard navigation, range selection, and deletion focus consume that same array. App-level consumers receive the same order through `visibleNotesRef`, with deleted-note previews filtered out. Deletion focus snapshots change only when the list inputs or callbacks change; inbox auto-advance keeps its existing next-only rule.

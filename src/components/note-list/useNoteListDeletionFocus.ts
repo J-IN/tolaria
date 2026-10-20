@@ -41,7 +41,9 @@ function replacementAfterRemoval(
 	return replacement ? visible.get(replacement.path) : undefined;
 }
 
-export function useNoteListDeletionFocus(options: DeletionFocusOptions): void {
+export function useNoteListDeletionFocus({
+	entries, visible, selection, loading, openNote, focusList,
+}: DeletionFocusOptions): void {
 	const previous = useRef<ListSnapshot | null>(null);
 	const focusFrame = useRef<number | null>(null);
 
@@ -54,17 +56,17 @@ export function useNoteListDeletionFocus(options: DeletionFocusOptions): void {
 
 	useEffect(() => {
 		const replacement = previous.current
-			? replacementAfterRemoval(previous.current, options)
+			? replacementAfterRemoval(previous.current, { entries, visible, selection, loading, openNote, focusList })
 			: undefined;
 		previous.current = {
-			available: new Set(options.entries.map((entry) => entry.path)),
-			visible: options.visible,
-			selection: options.selection,
+			available: new Set(entries.map((entry) => entry.path)),
+			visible: visible,
+			selection: selection,
 		};
 		if (!replacement) return;
 
-		options.openNote(replacement);
+		openNote(replacement);
 		if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
-		focusFrame.current = requestAnimationFrame(options.focusList);
-	}, [options]);
+		focusFrame.current = requestAnimationFrame(focusList);
+	}, [entries, visible, selection, loading, openNote, focusList]);
 }
