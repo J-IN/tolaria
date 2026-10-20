@@ -388,8 +388,8 @@ test("@smoke note switches preserve non-canonical Markdown and isolate cached so
 	await openFixtureVaultDesktopHarness(page, tempVaultDir);
 	await openNote(page, "Note B");
 	// Freeze application time so autosave cannot win the race with navigation.
-	await page.clock.install();
-	await page.clock.pauseAt(new Date());
+	await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+	await page.clock.pauseAt(new Date("2026-01-01T00:01:00Z"));
 
 	const editAndSwitch = async (
 		label: string,
