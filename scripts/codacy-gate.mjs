@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { addedLinesFromDiff, biomeGateFailures, eslintGateFailures } from './codacy-gate-lib.mjs'
 import { sarifGateFailures } from './codacy-sarif.mjs'
+import { partitionApprovedReports } from './codacy-approved-reports.mjs'
 
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim()
 const requestedBase = process.env.CODACY_BASE_REF || 'origin/main'
@@ -88,9 +89,15 @@ try {
   rmSync(temporaryDirectory, { force: true, recursive: true })
 }
 
-if (failures.length > 0) {
-  console.error(`Codacy gate failed with ${failures.length} new issue(s) or scanner failure(s):`)
-  for (const failure of failures) {
+const reports = partitionApprovedReports(failures, root, {
+  channel: process.env.TOLARIA_OTA_CHANNEL ?? process.env.TOLARIA_UPDATE_CHANNEL,
+})
+for (const report of reports.approved) {
+  console.warn(`Owner-approved until October 21: ${report.path}:${report.line} ${report.rule}`)
+}
+if (reports.blocking.length > 0) {
+  console.error(`Codacy gate failed with ${reports.blocking.length} new issue(s) or scanner failure(s):`)
+  for (const failure of reports.blocking) {
     const location = failure.path ? `${failure.path}:${failure.line}` : failure.tool
     console.error(`- ${location} ${failure.rule ?? ''} ${failure.message}`.trim())
   }

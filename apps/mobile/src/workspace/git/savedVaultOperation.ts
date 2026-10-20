@@ -1,0 +1,31 @@
+import type { createWorkspaceSyncEditors } from '../workspaceSyncEditors'
+import { withSavedWorkspace } from './workspaceWriteQueue'
+
+type SavedVaultOperation = {
+  editors: ReturnType<typeof createWorkspaceSyncEditors>
+  rootUri?: string
+  // Unchanged permits Git metadata writes, but guarantees note files are intact.
+  run: () => Promise<undefined | 'cancelled' | 'unchanged'>
+  refresh: (selectedNoteId?: string) => void
+  deferWhileFocused?: () => boolean
+}
+
+export async function runSavedVaultOperation({ editors, rootUri, run, refresh, deferWhileFocused }: SavedVaultOperation) {
+  const selectedNoteId = editors.selectedNoteId()
+  const resume = await editors.prepare(deferWhileFocused?.())
+  let saved = false
+  let cancelled = false
+  let cancelReplacement = () => {}
+  try {
+    if (rootUri) await withSavedWorkspace(rootUri, async () => {})
+    saved = true
+    cancelReplacement = editors.beginReplacement()
+    const result = await run()
+    cancelled = result === 'cancelled' || result === 'unchanged'
+  } finally {
+    if (cancelled) cancelReplacement()
+    // Changed or possibly changed files require fresh editors, even after failure.
+    if (saved && !cancelled) refresh(selectedNoteId)
+    else resume()
+  }
+}

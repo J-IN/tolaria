@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useEffectEvent } from 'react'
 import type { VaultEntry } from '../types'
 import { NoteSearchList } from './NoteSearchList'
 import { useNoteSearch } from '../hooks/useNoteSearch'
@@ -96,25 +96,26 @@ function useQuickOpenKeyboard({
   handleKeyDown: (e: KeyboardEvent) => void
   createFromQuery: () => void | Promise<void>
 }) {
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      handleKeyDown(e)
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        onClose()
-      } else if (e.key === 'Enter') {
-        e.preventDefault()
-        const selected = results.at(selectedIndex)
-        if (selected) {
-          selectAndClose(selected.entry, onSelect, onClose)
-        } else {
-          void createFromQuery()
-        }
+  const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
+    handleKeyDown(e)
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      onClose()
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      const selected = results.at(selectedIndex)
+      if (selected) {
+        selectAndClose(selected.entry, onSelect, onClose)
+      } else {
+        void createFromQuery()
       }
     }
+  })
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => onKeyDown(e)
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [results, selectedIndex, onSelect, onClose, handleKeyDown, createFromQuery])
+  }, [])
 }
 
 function closeOnBackdrop(root: HTMLDivElement, onClose: () => void): () => void {

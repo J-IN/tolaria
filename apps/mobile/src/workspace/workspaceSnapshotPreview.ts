@@ -1,0 +1,56 @@
+import type { MobileNote, MobileTypeDefinition, MobileWorkspaceSnapshot } from './mobileWorkspaceModel'
+import { absoluteDate, relativeDate } from './localVaultPresentation'
+import type { SnapshotCacheStorage } from './workspaceSnapshotCache'
+import { readWorkspaceSnapshotEnvelope, type WorkspaceSnapshotIdentity } from './workspaceSnapshotEnvelope'
+import { workspaceSnapshotStorage } from './workspaceSnapshotStorage'
+
+type PreviewNote = Omit<MobileNote, 'rawContent' | 'editorBlocks' | 'editorBullets'>
+type PreviewType = Omit<MobileTypeDefinition, 'rawContent' | 'template'>
+export type WorkspaceSnapshotPreview = Omit<MobileWorkspaceSnapshot,
+  'sync' | 'notes' | 'allNotes' | 'editorBlocks' | 'editorBullets' | 'typeDefinitions'> & {
+    kind: 'provisional'; notes: PreviewNote[]; allNotes: PreviewNote[]; typeDefinitions: Record<string, PreviewType>
+  }
+
+/** Presentation only: this value is intentionally not an editable workspace snapshot. */
+export async function readWorkspaceSnapshotPreview(identity: WorkspaceSnapshotIdentity,
+  storage: SnapshotCacheStorage | null = workspaceSnapshotStorage, signal?: AbortSignal): Promise<WorkspaceSnapshotPreview | null> {
+  if (!storage || signal?.aborted) return null
+  try {
+    const key = await storage.digest(identity.vaultPath)
+    requireActivePreview(signal)
+    const record = await readWorkspaceSnapshotEnvelope(storage, key, identity)
+    requireActivePreview(signal)
+    return record ? previewMetadata(record.snapshot) : null
+  } catch { return null }
+}
+
+function requireActivePreview(signal?: AbortSignal) {
+  if (signal?.aborted) throw new Error('workspaceLoadCancelled')
+}
+
+function previewMetadata(snapshot: MobileWorkspaceSnapshot): WorkspaceSnapshotPreview {
+  return {
+    kind: 'provisional', source: snapshot.source,
+    notes: snapshot.notes.map(previewNote), allNotes: (snapshot.allNotes ?? []).map(previewNote),
+    sidebarSections: snapshot.sidebarSections, folderPaths: snapshot.folderPaths,
+    noteListSubtitle: snapshot.noteListSubtitle, noteListPropertyOverrides: snapshot.noteListPropertyOverrides,
+    selectedNoteId: snapshot.selectedNoteId, searchQuery: snapshot.searchQuery, views: snapshot.views,
+    vaultConfig: snapshot.vaultConfig,
+    typeDefinitions: Object.fromEntries(Object.entries(snapshot.typeDefinitions ?? {}).map(([key, value]) => [key, previewType(value)])),
+  }
+}
+
+function previewNote(note: MobileNote): PreviewNote {
+  const value = { ...note, created: relativeDate(note.createdAt), modified: relativeDate(note.modifiedAt), date: absoluteDate(note.modifiedAt) }
+  delete value.rawContent
+  delete value.editorBlocks
+  delete value.editorBullets
+  return value
+}
+
+function previewType(type: MobileTypeDefinition): PreviewType {
+  const value = { ...type }
+  delete value.rawContent
+  delete value.template
+  return value
+}

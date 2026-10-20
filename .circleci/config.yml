@@ -28,6 +28,28 @@ parameters:
     description: >-
       Fail validation when the Codecov upload fails. Keep false while GitHub Actions remains the
       authoritative Codecov uploader.
+  publish-mobile-ota:
+    type: boolean
+    default: false
+  mobile-ota-channel:
+    type: enum
+    enum: [alpha, stable, ota-validation]
+    default: alpha
+  mobile-ota-runtime:
+    type: string
+    default: ""
+  mobile-ota-build-number:
+    type: string
+    default: ""
+  mobile-ota-base-ref:
+    type: string
+    default: ""
+  mobile-ota-group:
+    type: string
+    default: ""
+
+orbs:
+  codecov: codecov/codecov@6.0.0
 
 executors:
   node:
@@ -320,6 +342,75 @@ commands:
             done
 
 jobs:
+  mobile-ota-quality:
+    executor: node
+    steps:
+      - checkout
+      - install_frontend_dependencies
+      - run:
+          name: Verify mobile source and publishing safeguards
+          command: |
+            set -euo pipefail
+            pnpm mobile:lint
+            pnpm mobile:typecheck
+            pnpm mobile:test
+            node --test apps/mobile/scripts/mobile-*.test.mjs
+
+  mobile-ota-publish:
+    executor: node
+    parameters:
+      channel:
+        type: enum
+        enum: [alpha, stable, ota-validation]
+        default: alpha
+    environment:
+      TOLARIA_OTA_CHANNEL: << parameters.channel >>
+      TOLARIA_OTA_RUNTIME: << pipeline.parameters.mobile-ota-runtime >>
+      TOLARIA_IOS_BUILD_NUMBER: << pipeline.parameters.mobile-ota-build-number >>
+      TOLARIA_OTA_BASE_REF: << pipeline.parameters.mobile-ota-base-ref >>
+      TOLARIA_OTA_GROUP: << pipeline.parameters.mobile-ota-group >>
+      TOLARIA_EAS_CLI: /tmp/tolaria-eas/node_modules/.bin/eas
+    steps:
+      - checkout
+      - install_frontend_dependencies
+      - run:
+          name: Install pinned official publishing CLI
+          command: npm install --prefix /tmp/tolaria-eas --no-save eas-cli@25.2.0
+      - when:
+          condition:
+            equal: [alpha, << parameters.channel >>]
+          steps:
+            - restore_cache:
+                keys:
+                  - v1-mobile-ota-alpha-main-
+      - run:
+          name: Publish compatible iOS update after Sentry source-map upload
+          command: |
+            set -euo pipefail
+            if [[ "$TOLARIA_OTA_CHANNEL" == "stable" ]]; then
+              export TOLARIA_OTA_RUNTIME="${TOLARIA_OTA_RUNTIME:-${TOLARIA_ACCEPTED_STABLE_RUNTIME:-}}"
+              node apps/mobile/scripts/promote-mobile-update.mjs
+            else
+              export TOLARIA_OTA_RUNTIME="${TOLARIA_OTA_RUNTIME:-${TOLARIA_ACCEPTED_ALPHA_RUNTIME:-}}"
+              export TOLARIA_IOS_BUILD_NUMBER="${TOLARIA_IOS_BUILD_NUMBER:-${TOLARIA_ACCEPTED_ALPHA_BUILD_NUMBER:-}}"
+              if [[ -z "$TOLARIA_OTA_BASE_REF" && "$TOLARIA_OTA_CHANNEL" == "alpha" && -r /tmp/tolaria-mobile-ota/alpha.sha ]]; then
+                export TOLARIA_OTA_BASE_REF="$(cat /tmp/tolaria-mobile-ota/alpha.sha)"
+              fi
+              node apps/mobile/scripts/publish-mobile-update.mjs
+              if [[ "$TOLARIA_OTA_CHANNEL" == "alpha" ]]; then
+                mkdir -p /tmp/tolaria-mobile-ota
+                git rev-parse HEAD > /tmp/tolaria-mobile-ota/alpha.sha
+              fi
+            fi
+      - when:
+          condition:
+            equal: [alpha, << parameters.channel >>]
+          steps:
+            - save_cache:
+                key: v1-mobile-ota-alpha-main-{{ .Revision }}
+                paths:
+                  - /tmp/tolaria-mobile-ota/alpha.sha
+
   # Validation runs as independent jobs so the slowest one, not their sum, sets the wall clock.
   # Job inputs, for skip_unless_changed: frontend jobs ignore Rust sources and docs/; Rust jobs
   # need src-tauri/, the shared JSON contracts it embeds (src/shared/, mcp-server/), or CI config.
@@ -1471,6 +1562,7 @@ jobs:
 
 workflows:
   validation:
+    unless: << pipeline.parameters.publish-mobile-ota >>
     jobs:
       - static-gates:
           context: tolaria-ci
@@ -1527,6 +1619,30 @@ workflows:
               ignore: gh-pages
             tags:
               ignore: /.*/
+      - mobile-ota-quality:
+          filters:
+            branches:
+              only: main
+            tags:
+              ignore: /.*/
+      - mobile-ota-publish:
+          name: publish-mobile-alpha
+          channel: alpha
+          context: tolaria-release
+          serial-group: << pipeline.project.slug >>/mobile-ota-alpha
+          requires:
+            - static-gates
+            - frontend-lint-build
+            - frontend-coverage-report
+            - rust-coverage
+            - rust-lint
+            - playwright-smoke-report
+            - mobile-ota-quality
+          filters:
+            branches:
+              only: main
+            tags:
+              ignore: /.*/
       - linux-build-verification:
           filters:
             branches:
@@ -1547,7 +1663,10 @@ workflows:
               ignore: /.*/
 
   alpha-release:
-    when: << pipeline.parameters.run_release_workflows >>
+    when:
+      and:
+        - << pipeline.parameters.run_release_workflows >>
+        - not: << pipeline.parameters.publish-mobile-ota >>
     jobs:
       - compute-alpha-version:
           filters:
@@ -1636,7 +1755,10 @@ workflows:
               ignore: /.*/
 
   stable-release:
-    when: << pipeline.parameters.run_release_workflows >>
+    when:
+      and:
+        - << pipeline.parameters.run_release_workflows >>
+        - not: << pipeline.parameters.publish-mobile-ota >>
     jobs:
       - compute-stable-version:
           filters:
@@ -1716,3 +1838,39 @@ workflows:
               ignore: /.*/
             tags:
               only: /^(v20.*|stable-v.*)$/
+
+  mobile-ota:
+    when: << pipeline.parameters.publish-mobile-ota >>
+    jobs:
+      - static-gates:
+          context: tolaria-ci
+      - frontend-lint-build
+      - frontend-coverage
+      - frontend-coverage-report:
+          context: tolaria-ci
+          requires:
+            - frontend-coverage
+      - rust-coverage:
+          context: tolaria-ci
+      - rust-lint
+      - playwright-smoke
+      - playwright-smoke-report:
+          requires:
+            - playwright-smoke
+      - mobile-ota-quality
+      - approve-mobile-ota:
+          type: approval
+          requires:
+            - static-gates
+            - frontend-lint-build
+            - frontend-coverage-report
+            - rust-coverage
+            - rust-lint
+            - playwright-smoke-report
+            - mobile-ota-quality
+      - mobile-ota-publish:
+          channel: << pipeline.parameters.mobile-ota-channel >>
+          context: tolaria-release
+          serial-group: << pipeline.project.slug >>/mobile-ota-<< pipeline.parameters.mobile-ota-channel >>
+          requires:
+            - approve-mobile-ota

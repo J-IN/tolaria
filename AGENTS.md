@@ -31,6 +31,8 @@ Use an exception only when a required service or analyzer remains unavailable af
 ### Commits & pushes
 
 - Local work may happen on `main`, in detached HEAD worktrees, or in other temporary local states. The production path is still direct-to-main: final verified work is pushed to `origin/main`, with no PR branch flow.
+- Exception: long-lived mobile UI foundation work may use `mobile-ui-foundation` and push only to `origin/mobile-ui-foundation`.
+- On `mobile-ui-foundation`, routine hooks use the scoped mobile checks (`mobile:lint`, `mobile:typecheck`, `mobile:test`, and screenshot QA on push). Use `TOLARIA_MOBILE_FULL_GATE=1` before promotion or release-readiness work.
 - Commit every 20–30 min: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`
 - Pre-commit is a lightweight lint gate only. Pre-push runs the full check suite (build + tests + coverage + core Playwright smoke + CodeScene), preferably on three Chunk sidecar lanes for automatic test/coverage work: frontend lint/build/coverage, Rust coverage, and Playwright smoke. The goal is lower wall-clock time than local hooks while keeping each heavy gate isolated; keep local Playwright mainly for authoring, focused reproduction, or sidecar outages.
 - CircleCI is the authoritative outer-loop CI/CD system. `.circleci/config.yml` owns validation, native cross-platform release builds, GitHub Release publication, and Pages publication.

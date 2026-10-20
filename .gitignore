@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.expo/
 site/.vitepress/cache/
 site/.vitepress/dist/
 _site/
@@ -103,3 +104,6 @@ CODE-HEALTH-REPORT.md
 # it puts generated notes in every diff and pull request.
 .verity/*
 !.verity/standard.yaml
+# Expo native projects are generated locally by `expo prebuild`.
+apps/mobile/ios/
+apps/mobile/android/
