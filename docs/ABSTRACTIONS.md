@@ -278,8 +278,21 @@ disable ordinary note autosave. The scheduler retains the pending sync and retri
 at its idle interval without counting focus as a transport failure. Manual sync
 and foreground departure retain the normal flush, drain and recovery barriers.
 The vault manager uses both boundaries (ADR 0196). `MobileVaultProvider` owns
+the revisioned pending-path set consumed by `MobilePendingNoteIndicator` for
+Git and linked-folder notes. `workspaceSyncEditors` passes written paths into
+the existing sync ledger; rename/move operations include both endpoints.
+Checkpoint acknowledgement clears only revisions captured under the write
+barrier, retaining later edits even on the same path. Old ledgers without paths
+remain valid. This is a presentation hint, not an authoritative Git index, and
+never removes the byte-verification checkpoint (ADR 0271). The provider owns
 vault switching and manual sync, while a separate memoized workspace context
-prevents progress updates from re-indexing the vault. `useMobileWorkspaceResolution`
+prevents progress updates from re-indexing the vault.
+The manager's `useGitSyncProgress` forwards real Git object counts to Settings,
+throttled to ten updates per second except phase boundaries and completion.
+Each operation owns its callbacks; finished/unmounted operations cannot publish
+late progress. Phase changes and finalization clear stale counts. The sidebar
+pill remains two lines, and counts never imply an overall sync percentage.
+`useMobileWorkspaceResolution`
 also retains the repository request and initial snapshot across equivalent parent
 renders; a new vault selection revision still invalidates that snapshot.
 `preloadNativeWorkspace` awaits the iOS background index bridge when restoring

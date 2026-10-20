@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useRef, useState, type Dispatch, ty
 import { WorkspaceSyncEditorsContext } from '../workspace/workspaceSyncEditors'
 import { requestCreatedNoteFocus } from '../workspace/mobileEditorFocus'
 import { withDefaultNoteType } from '../workspace/mobileDefaultNoteType'
+import { workspacePendingWritePaths } from '../workspace/mobilePendingChanges'
 import { useMobileAnalytics } from '../analytics/useMobileAnalytics'
 import { trackSuccessfulMobileEdit } from '../analytics/mobileSuccessfulEdit'
 import { captureMobileError } from '../analytics/mobileCrashChannel'
@@ -107,7 +108,7 @@ function useWorkspaceEditApplier({
     if (generation !== syncEditors?.generation()) return { snapshot: previousSnapshot, writes: [] }
     const result = applyWorkspaceEditToWritableSnapshot(previousSnapshot, edit, repositoryRequest?.source)
     requestCreatedNoteFocus(syncEditors, edit, result)
-    if (result.writes.length > 0) syncEditors?.markDirty()
+    if (result.writes.length > 0) syncEditors?.markDirty(workspacePendingWritePaths(result.writes))
     snapshotState.replaceWorkspaceSnapshot(result.snapshot)
     recordWorkspaceEditHistory({ edit, options, previousSnapshot, resultSnapshot: result.snapshot, setWorkspaceHistory })
     if (result.writes.length > 0) void persistWorkspaceWrites({

@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "Fajły źmianilisia paśla hetaha paraŭnańnia. Pierad užyvańniem vybaru prahladźcie apošnija viersii.",
   "mobile.sync.review": "Prahlad kanfliktaŭ",
   "mobile.sync.noConflicts": "Kanfliktnych fajłaŭ nie zastałosia. Praciahvajcie, kab zaviaršyć sinchranizacyju.",
-  "mobile.sync.previewTruncated": "Papiaredni prahlad skaročany; poŭny fajł zachavany."
+  "mobile.sync.previewTruncated": "Papiaredni prahlad skaročany; poŭny fajł zachavany.",
+  "mobile.git.commitLocal": "Zrabić kamit lakaĺna",
+  "mobile.sync.action": "Sinchranizavać",
+  "mobile.sync.failedAt": "Nie atrymalasia {time}",
+  "mobile.properties.addRelationships": "Dadać suviazi"
 }

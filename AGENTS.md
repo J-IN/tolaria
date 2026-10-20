@@ -13,8 +13,8 @@ Use an exception only when a required service or analyzer remains unavailable af
 **Linear** — workspace Refactoring, team Tolaria, issue key `TOL`.
 
 - Workflow: **Backlog** (not ready) → **Open** (ready for an agent) → **To Rework** (review failed: read the latest review comment and fix only that; pick these **before** Open) → **In Progress** (claimed) → **In Review** (pushed, awaiting Luca's QA) → **Done** / **Canceled** / **Duplicate**.
-- Claim an issue by moving it to In Progress **before** starting work, so agents never collide. Never start an issue that is already In Progress.
-- Labels: type `Bug` / `Feature` / `Improvement`; `mac-only` (leave for the Mac mini); `linux-ok`; `agent-blocked` (always with a comment saying why it is stuck and what would unblock it); `dubious` and `contributor-pr` (Backlog, awaiting Luca); Source group `Sentry` / `Canny` / `GitHub`.
+- Claim an issue by moving it to In Progress **before** starting work, so agents never collide. Never start an issue that is already In Progress. Exception: follow the mandatory-rule exception protocol if Linear remains unavailable after one retry.
+- Labels: type `Bug` / `Feature` / `Improvement`; `mac-only` (leave for the Mac mini); `linux-ok`; `agent-blocked` (always with a comment saying why it is stuck and what would unblock it); `dubious` and `contributor-pr` (Backlog, awaiting Luca); Source group `Sentry` / `Canny` / `GitHub`. Exception: an unavailable Linear labeling service requires the same owner-approved exception protocol.
 - Reference the issue ID in commit messages, e.g. `fix: keep image width after restart (TOL-123)`.
 
 ### Start working on a task
@@ -224,7 +224,7 @@ Use shadcn/ui components for user-facing interactive elements instead of raw HTM
 Release notes live in `release-notes/<tag>.md` and are published to GitHub Releases and the public website.
 
 **Format:**
-- Every release note must start with frontmatter:
+- Every release note must start with frontmatter; exceptions require the mandatory-rule exception protocol:
   ```markdown
   ---
   type: Note
@@ -282,4 +282,4 @@ Prefer Mermaid (`flowchart`, `sequenceDiagram`, `classDiagram`, `stateDiagram-v2
 
 ## Stuck or blocked tasks
 
-Whenever an agent sets the `agent-blocked` label, moves a task back to Open, or otherwise leaves a task stuck, it must ALWAYS add a task comment explaining why: the exact blocker, the evidence (command/log path), and what decision or action would unblock it. Never leave a task blocked without that comment.
+Whenever an agent sets the `agent-blocked` label, moves a task back to Open, or otherwise leaves a task stuck, it must ALWAYS add a task comment explaining why: the exact blocker, the evidence (command/log path), and what decision or action would unblock it. Never leave a task blocked without that comment. Exception: a Linear outage after one retry requires the identical evidence in the final handoff and repository-owner approval under the mandatory-rule exception protocol.

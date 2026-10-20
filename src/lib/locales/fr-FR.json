@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "Fichiers modifiés après cette comparaison. Vérifiez les dernières versions avant d'appliquer vos choix.",
   "mobile.sync.review": "Examiner les conflits",
   "mobile.sync.noConflicts": "Il ne reste plus aucun fichier en conflit. Continuez pour terminer la synchronisation.",
-  "mobile.sync.previewTruncated": "Aperçu tronqué ; le fichier complet est conservé."
+  "mobile.sync.previewTruncated": "Aperçu tronqué ; le fichier complet est conservé.",
+  "mobile.git.commitLocal": "Valider localement",
+  "mobile.sync.action": "Synchroniser",
+  "mobile.sync.failedAt": "Échec {time}",
+  "mobile.properties.addRelationships": "Ajouter des relations"
 }

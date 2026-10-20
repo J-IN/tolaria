@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "Файлы былі зменены пасля гэтага параўнання. Перад ужываннем вашых выбараў праглядзіце апошнія версіі.",
   "mobile.sync.review": "Прагляд канфліктаў",
   "mobile.sync.noConflicts": "Канфліктных файлаў не засталося. Працягніце, каб завяршыць сінхранізацыю.",
-  "mobile.sync.previewTruncated": "Папярэдні прагляд абрэзаны; поўны файл захаваны."
+  "mobile.sync.previewTruncated": "Папярэдні прагляд абрэзаны; поўны файл захаваны.",
+  "mobile.git.commitLocal": "Зрабіць каміт лакальна",
+  "mobile.sync.action": "Сінхранізаваць",
+  "mobile.sync.failedAt": "Не атрымалася {time}",
+  "mobile.properties.addRelationships": "Дадаць сувязі"
 }

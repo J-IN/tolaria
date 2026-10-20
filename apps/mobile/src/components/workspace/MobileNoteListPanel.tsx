@@ -1,5 +1,6 @@
 import { createThemeStyles } from './MobileNoteListPanel.styles'
 import { MobileCreateNoteButton } from './MobileCreateNoteButton'
+import { MobilePendingNoteIndicator } from './MobilePendingNoteIndicator'
 import { useMobileNoteListBulkSelection, type MobileNoteListBulkActions } from './useMobileNoteListSelection'
 import { useMobileColors, useMobileStyles } from '../../ui/theme/useMobileTheme'
 import { useMemo, type ReactNode } from 'react'
@@ -419,6 +420,7 @@ function NoteRow(props: NoteRowProps) {
     <MobileSwipeableNoteRow actions={props.rowActions} note={note}>
     <MobileListRow
       chips={<NoteRowChips displayPropertyKeys={displayPropertyKeys} note={note} propertyDisplayModes={propertyDisplayModes} typeDefinitions={typeDefinitions} />}
+      leading={<MobilePendingNoteIndicator note={note} />}
       layoutProbe={layoutProbe}
       metricId={`noteList.item.${note.id}`}
       multiSelected={multiSelected}

@@ -1,9 +1,10 @@
 import type { SyncFailureKind } from './syncFailure'
+import { validPendingSyncFields, type PendingSyncFields } from './mobilePendingChanges'
 
 const states = ['local', 'pending', 'committed', 'synced', 'diverged', 'failed', 'saveFailed'] as const
 export type VaultSyncState = typeof states[number]
 export type SyncPhase = 'checkpoint' | 'fetch' | 'checkout' | 'push' | 'clone' | null
-export type VaultSyncRecord = {
+export type VaultSyncRecord = PendingSyncFields & {
   status: VaultSyncState
   lastSuccessAt: number | null
   lastFailureAt?: number | null
@@ -36,10 +37,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function validSyncRecord(value: unknown): value is VaultSyncRecord {
   if (!value || typeof value !== 'object') return false
   const record = value as Record<string, unknown>
-  return states.includes(record.status as VaultSyncState)
-    && validRecordDates(record) && nullableCommit(record.lastCommitId)
-    && [null, 'checkpoint', 'fetch', 'checkout', 'push', 'clone'].includes(record.phase as SyncPhase)
-    && [null, 'retry', 'authentication', 'conflict', 'local'].includes(record.error as SyncFailureKind | null)
+  return [
+    states.includes(record.status as VaultSyncState),
+    validRecordDates(record), nullableCommit(record.lastCommitId), validPendingSyncFields(record),
+    [null, 'checkpoint', 'fetch', 'checkout', 'push', 'clone'].includes(record.phase as SyncPhase),
+    [null, 'retry', 'authentication', 'conflict', 'local'].includes(record.error as SyncFailureKind | null),
+  ].every(Boolean)
 }
 
 function validRecordDates(record: Record<string, unknown>) {

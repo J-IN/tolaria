@@ -24,6 +24,7 @@ import type { VaultSyncState } from '../syncLedgerModel'
 import { inspectVaultConflicts, resolveVaultConflicts, type VaultConflictReview } from '../vaultConflictOperations'
 import type { SyncConflictChoices } from '../syncConflictModel'
 import { useGitCloneProgress } from './useGitCloneProgress'
+import { useGitSyncProgress } from './useGitSyncProgress'
 import { useVaultNotices } from '../useVaultNotices'
 import type { ManagedGitVault } from './managedGitVaults'
 import type { ManagedLocalVault } from './managedLocalVaults'
@@ -36,6 +37,7 @@ export function useMobileVaults() {
   const catalog = useManagedVaultCatalog()
   const account = useGitHubAccount()
   const cloneProgress = useGitCloneProgress()
+  const syncProgress = useGitSyncProgress()
   const preferences = useMobileSettings()
   const analytics = useMobileAnalytics()
   const [editors] = useState(createWorkspaceSyncEditors)
@@ -121,7 +123,9 @@ export function useMobileVaults() {
   }
 
   const syncFolder = async (root: string) => {
+    const pendingCheckpoint = syncHistory.pendingCheckpoint()
     const result = await syncLinkedWorkspace(root)
+    if (!result.conflict) syncHistory.acknowledgePending(pendingCheckpoint)
     setStatus(result.conflict ? 'diverged' : 'synced')
     syncHistory.setProblem(result.conflict ? 'conflict' : null)
     setError(result.conflict ? 'mobile.vaults.folderConflict' : null)
@@ -134,6 +138,7 @@ export function useMobileVaults() {
     requireActiveSync(signal)
     if (linked && active.selection) return syncFolder(active.selection.vaultRootUri)
     if (!active.git) { setStatus('local'); return null }
+    const connection = managedGitConnection(active.git)
     const { syncGitVault } = await import('./gitRemote')
     let checkpointVersion = dirtyVersion.current
     const localAccess = createGitEditorAccess({
@@ -144,17 +149,23 @@ export function useMobileVaults() {
         setRevision(value => value + 1)
       },
     })
-    const result = await syncGitVault({
-      ...managedGitConnection(active.git), http: nativeGitHttp,
-      checkpoint, signal,
+    const result = await syncProgress.run(onProgress => syncGitVault({
+      ...connection, http: nativeGitHttp,
+      checkpoint, signal, onProgress,
       onCheckpoint: oid => { setLastCommitId(oid.slice(0, 8)); setStatus('committed') },
       withLocalAccess: async run => {
-        const value = await localAccess(run)
+        const value = await localAccess(async () => {
+          const pendingCheckpoint = syncHistory.pendingCheckpoint()
+          const result = await run()
+          syncHistory.acknowledgePending(pendingCheckpoint)
+          return result
+        })
         checkpointVersion = dirtyVersion.current
         return value
       },
-      getToken: async () => (await account.currentSession())?.accessToken, onPhase: setPhase,
-    }, mobileGitAuthor(account.session))
+      getToken: async () => (await account.currentSession())?.accessToken,
+      onPhase: phase => { setPhase(phase); syncProgress.clear() },
+    }, mobileGitAuthor(account.session)))
     syncHistory.complete(result.kind, checkpointVersion !== dirtyVersion.current)
     if (result.kind === 'diverged') notices.show('conflict')
     else notices.recovered()
@@ -172,7 +183,9 @@ export function useMobileVaults() {
     let resolved = false
     await perform(async () => {
       try {
+        const pendingCheckpoint = syncHistory.pendingCheckpoint()
         const oid = await resolveVaultConflicts(active, conflictReview, choices, mobileGitAuthor(account.session))
+        syncHistory.acknowledgePending(pendingCheckpoint)
         recordResolution(oid)
         resolved = true
         return null
@@ -189,7 +202,9 @@ export function useMobileVaults() {
     if (!active.git) return 'cancelled'
     setPhase('checkpoint')
     const connection = managedGitConnection(active.git)
+    const pendingCheckpoint = syncHistory.pendingCheckpoint()
     const result = await withSavedWorkspace(connection.operationKey ?? connection.dir, () => createGitVault(connection).checkpoint(mobileGitAuthor(account.session), message))
+    syncHistory.acknowledgePending(pendingCheckpoint)
     if (result.changedFiles > 0) analytics.capture({ name: 'commit_made' })
     setLastCommitId(result.oid.slice(0, 8))
     setStatus('committed')
@@ -230,7 +245,7 @@ export function useMobileVaults() {
     selectLocal: (vault: ManagedLocalVault, present = true) => catalogActions(present).selectLocal(vault),
     forget: (id: string) => catalogActions().forget(id),
     clone: (url: string) => catalogActions().clone(url),
-    account, active, busy, catalog, close, cloneProgress, editors, error, open, opened, linked, syncHistory, notices,
+    account, active, busy, catalog, close, cloneProgress, syncProgress, editors, error, open, opened, linked, syncHistory, notices,
     phase, restorePending, revision, status, sync, commit, lastCommitId,
     conflictReview, conflictFailure, reviewConflicts, resolveConflicts, cancelConflictReview,
   }
@@ -246,12 +261,12 @@ type BackgroundSyncOptions = {
 
 function useVaultDirtyVersion(editors: ReturnType<typeof createWorkspaceSyncEditors>, history: ReturnType<typeof useVaultSyncLedger>) {
   const version = useRef(0)
-  const { record: { status }, setStatus } = history
-  useEffect(() => editors.subscribeDirty(() => {
+  const { markDirty } = history
+  useEffect(() => editors.subscribeDirty(paths => {
     version.current += 1
     // Editing does not resolve a conflict or authorize another automatic sync.
-    if (status !== 'diverged') setStatus('pending')
-  }), [editors, setStatus, status])
+    markDirty(paths)
+  }), [editors, markDirty])
   return version
 }
 

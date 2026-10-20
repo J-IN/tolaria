@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "Arquivos alterados após esta comparação. Revise as versões mais recentes antes de aplicar suas escolhas.",
   "mobile.sync.review": "Revisar conflitos",
   "mobile.sync.noConflicts": "Não há mais arquivos conflitantes. Continue para concluir a sincronização.",
-  "mobile.sync.previewTruncated": "Visualização truncada; o arquivo completo está preservado."
+  "mobile.sync.previewTruncated": "Visualização truncada; o arquivo completo está preservado.",
+  "mobile.git.commitLocal": "Confirmar localmente",
+  "mobile.sync.action": "Sincronizar",
+  "mobile.sync.failedAt": "Falhou {time}",
+  "mobile.properties.addRelationships": "Adicionar relacionamentos"
 }

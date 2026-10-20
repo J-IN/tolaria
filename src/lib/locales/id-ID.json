@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "File berubah setelah perbandingan ini. Tinjau versi terbaru sebelum menerapkan pilihan Anda.",
   "mobile.sync.review": "Tinjau konflik",
   "mobile.sync.noConflicts": "Tidak ada lagi file yang bertentangan. Lanjutkan untuk menyelesaikan sinkronisasi.",
-  "mobile.sync.previewTruncated": "Pratinjau dipotong; file lengkap tetap disimpan."
+  "mobile.sync.previewTruncated": "Pratinjau dipotong; file lengkap tetap disimpan.",
+  "mobile.git.commitLocal": "Lakukan commit secara lokal",
+  "mobile.sync.action": "Sinkronkan",
+  "mobile.sync.failedAt": "Gagal {time}",
+  "mobile.properties.addRelationships": "Tambahkan relasi"
 }

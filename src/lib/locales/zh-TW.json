@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "在此比較之後，檔案已變更。在套用您的選擇之前，請先檢視最新版本。",
   "mobile.sync.review": "檢視衝突",
   "mobile.sync.noConflicts": "已無衝突的檔案。繼續以完成同步。",
-  "mobile.sync.previewTruncated": "預覽已截斷；完整檔案已保留。"
+  "mobile.sync.previewTruncated": "預覽已截斷；完整檔案已保留。",
+  "mobile.git.commitLocal": "在本地提交",
+  "mobile.sync.action": "同步",
+  "mobile.sync.failedAt": "失敗 {time}",
+  "mobile.properties.addRelationships": "新增關係"
 }

@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "Після цього порівняння файли було змінено. Перегляньте останні версії, перш ніж застосувати свої вибори.",
   "mobile.sync.review": "Переглянути конфлікти",
   "mobile.sync.noConflicts": "Файлів, що конфліктують, більше немає. Продовжуйте, щоб завершити синхронізацію.",
-  "mobile.sync.previewTruncated": "Попередній перегляд обрізано; повний файл збережено."
+  "mobile.sync.previewTruncated": "Попередній перегляд обрізано; повний файл збережено.",
+  "mobile.git.commitLocal": "Виконати коміт локально",
+  "mobile.sync.action": "Синхронізація",
+  "mobile.sync.failedAt": "Помилка {time}",
+  "mobile.properties.addRelationships": "Додати зв'язки"
 }

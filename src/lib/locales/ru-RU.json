@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "Файлы изменились после этого сравнения. Просмотрите последние версии, прежде чем применить выбранные параметры.",
   "mobile.sync.review": "Просмотреть конфликты",
   "mobile.sync.noConflicts": "Конфликтующих файлов не осталось. Продолжите, чтобы завершить синхронизацию.",
-  "mobile.sync.previewTruncated": "Предварительный просмотр усечен; полный файл сохранен."
+  "mobile.sync.previewTruncated": "Предварительный просмотр усечен; полный файл сохранен.",
+  "mobile.git.commitLocal": "Выполнить коммит локально",
+  "mobile.sync.action": "Синхронизация",
+  "mobile.sync.failedAt": "Ошибка {time}",
+  "mobile.properties.addRelationships": "Добавить связи"
 }

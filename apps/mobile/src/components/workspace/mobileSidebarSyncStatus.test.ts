@@ -59,7 +59,7 @@ describe('sidebar sync presentation', () => {
   })
   it('shows failure age without presenting it as the last successful sync', () => {
     expect(sidebarSyncPresentation({ ...controls, status: 'failed', lastFailureAt: now - 60_000 }, display, true, now))
-      .toMatchObject({ detail: 'Sync failed 1m ago', lastSync: '2m ago', problem: true })
+      .toMatchObject({ detail: 'Failed 1m ago', lastSync: '2m ago', problem: true })
   })
   it.each([
     ['checkpoint', 'Saving local changes...'], ['fetch', 'Fetching remote changes...'],

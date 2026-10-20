@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "在此次比较后，文件已发生变化。在应用您的选择之前，请先查看最新版本。",
   "mobile.sync.review": "查看冲突",
   "mobile.sync.noConflicts": "不再存在冲突文件。继续完成同步。",
-  "mobile.sync.previewTruncated": "预览已截断；完整文件已保留。"
+  "mobile.sync.previewTruncated": "预览已截断；完整文件已保留。",
+  "mobile.git.commitLocal": "在本地提交",
+  "mobile.sync.action": "同步",
+  "mobile.sync.failedAt": "{time} 失败",
+  "mobile.properties.addRelationships": "添加关系"
 }

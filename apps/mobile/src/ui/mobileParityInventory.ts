@@ -116,6 +116,13 @@ export const mobileParityInventory = [
     surface: 'Note list panel',
   },
 {
+    assertions: ['Pending-note indicator and revisioned sync-ledger tests: per-file dots, vault isolation, restart recovery, and edits during sync'],
+    contracts: ['desktopNoteItemParity'],
+    desktopSource: 'NoteItem Git-change status; native adaptation shows a yellow dot before connected-vault note titles',
+    mobileFile: 'src/components/workspace/MobilePendingNoteIndicator.tsx',
+    surface: 'Pending local note changes',
+  },
+{
     assertions: ['MobileCreateNoteButtonTests: 57.6-point circular target at 120%, list-bound placement, immediate editor focus, and bulk-selection exclusion'],
     contracts: ['desktopToolbarActionParity'],
     desktopSource: 'NoteListHeader create-note command; owner-requested native adaptation moves it to the bottom of the note list',

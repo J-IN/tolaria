@@ -5,7 +5,7 @@ export type PrepareEditorForSync = (deferWhileFocused?: boolean) => Promise<() =
 
 export function createWorkspaceSyncEditors() {
   const editors = new Map<PrepareEditorForSync, string | undefined>()
-  const dirtyListeners = new Set<() => void>()
+  const dirtyListeners = new Set<(paths: readonly string[]) => void>()
   const focus = createMobileEditorFocus()
   let blocked = false
   let generation = 0
@@ -23,8 +23,8 @@ export function createWorkspaceSyncEditors() {
       // Only a confirmed no-change cancellation may revive the frozen editor.
       return () => { if (generation === replacement) generation = previous }
     },
-    markDirty: () => { for (const listener of dirtyListeners) listener() },
-    subscribeDirty: (listener: () => void) => {
+    markDirty: (paths: readonly string[] = []) => { for (const listener of dirtyListeners) listener(paths) },
+    subscribeDirty: (listener: (paths: readonly string[]) => void) => {
       dirtyListeners.add(listener)
       return () => { dirtyListeners.delete(listener) }
     },

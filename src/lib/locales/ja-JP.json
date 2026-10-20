@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "この比較後にファイルが変更されました。選択を適用する前に、最新バージョンを確認してください。",
   "mobile.sync.review": "競合を確認する",
   "mobile.sync.noConflicts": "競合するファイルは残っていません。続行して同期を完了します。",
-  "mobile.sync.previewTruncated": "プレビューは切り捨てられています。完全なファイルは保持されています。"
+  "mobile.sync.previewTruncated": "プレビューは切り捨てられています。完全なファイルは保持されています。",
+  "mobile.git.commitLocal": "ローカルでコミット",
+  "mobile.sync.action": "同期",
+  "mobile.sync.failedAt": "{time}に失敗しました",
+  "mobile.properties.addRelationships": "リレーションシップを追加"
 }

@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "이 비교 이후 파일이 변경되었습니다. 선택 사항을 적용하기 전에 최신 버전을 검토하세요.",
   "mobile.sync.review": "충돌 검토",
   "mobile.sync.noConflicts": "충돌하는 파일이 남아 있지 않습니다. 계속 진행하여 동기화를 완료하세요.",
-  "mobile.sync.previewTruncated": "미리 보기가 잘렸습니다. 전체 파일은 그대로 보존됩니다."
+  "mobile.sync.previewTruncated": "미리 보기가 잘렸습니다. 전체 파일은 그대로 보존됩니다.",
+  "mobile.git.commitLocal": "로컬에서 커밋",
+  "mobile.sync.action": "동기화",
+  "mobile.sync.failedAt": "실패 {time}",
+  "mobile.properties.addRelationships": "관계 추가"
 }

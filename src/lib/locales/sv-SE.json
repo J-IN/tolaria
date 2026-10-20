@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "Filerna har ändrats efter den här jämförelsen. Granska de senaste versionerna innan du tillämpar dina val.",
   "mobile.sync.review": "Granska konflikter",
   "mobile.sync.noConflicts": "Inga motstridiga filer återstår. Fortsätt för att slutföra synkroniseringen.",
-  "mobile.sync.previewTruncated": "Förhandsgranskningen är trunkerad; den fullständiga filen har bevarats."
+  "mobile.sync.previewTruncated": "Förhandsgranskningen är trunkerad; den fullständiga filen har bevarats.",
+  "mobile.git.commitLocal": "Gör en lokal commit",
+  "mobile.sync.action": "Synkronisera",
+  "mobile.sync.failedAt": "Misslyckades {time}",
+  "mobile.properties.addRelationships": "Lägg till relationer"
 }

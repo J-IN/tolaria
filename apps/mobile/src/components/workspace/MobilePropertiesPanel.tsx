@@ -309,7 +309,7 @@ function PropertyActionsAndReferences({ props }: { props: NotePropertiesProps })
 
   return (
     <>
-      <PropertyActionRow label={mobileText('inspector.relationship.addRelationship')} layoutProbe={layoutProbe} layoutProbeId="properties.action.add-relationship" testID="property-action-add-relationship" onPress={() => onAddRelationship()} />
+      <PropertyActionRow label={mobileText('mobile.properties.addRelationships')} layoutProbe={layoutProbe} layoutProbeId="properties.action.add-relationship" testID="property-action-add-relationship" onPress={() => onAddRelationship()} />
       <ReferenceGroups groups={referenceGroups} layoutProbe={layoutProbe} typeDefinitions={typeDefinitions} onSelectNote={onSelectNote} />
     </>
   )

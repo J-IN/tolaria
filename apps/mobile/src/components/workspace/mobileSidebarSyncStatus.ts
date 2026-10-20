@@ -35,7 +35,7 @@ function visibleDetail({ status, state, lastSync, controls, now }: {
   status: Status; state: string; lastSync: string | null; controls: Controls; now: number
 }) {
   if (['failed', 'saveFailed'].includes(status) && controls.lastFailureAt != null) {
-    return `${state} ${lastSyncLabel(controls.lastFailureAt, now)}`
+    return mobileText('mobile.sync.failedAt').replace('{time}', lastSyncLabel(controls.lastFailureAt, now))
   }
   if (['syncing', 'failed', 'saveFailed', 'diverged', 'unavailable'].includes(status)) return state
   return lastSync ?? state

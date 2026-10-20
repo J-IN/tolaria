@@ -53,6 +53,10 @@ hint. Authentication and conflict failures require attention.
 Installation-local sync history is keyed by managed vault ID and published with
 backup recovery (ADR 0222). It records successful remote/provider operations
 separately from local commits and pending edits, without storing user content.
+The same ledger keeps installation-local, revisioned paths for pending note dots
+(ADR 0271). A successful checkpoint acknowledges only the captured revisions;
+edits made while transport is running remain pending. These hints never replace
+fresh Git/content comparisons or authorize checkout.
 Native conflict review shares local/remote/keep-both choices across Git and linked
 folders (ADR 0223). Git retains both parents; coordinated folder publication
 retains private original snapshots and an interruption journal. Comparisons are

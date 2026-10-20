@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "Các tệp đã thay đổi sau lần so sánh này. Xem lại các phiên bản mới nhất trước khi áp dụng các lựa chọn của bạn.",
   "mobile.sync.review": "Xem lại các xung đột",
   "mobile.sync.noConflicts": "Không còn tệp nào xung đột. Tiếp tục để hoàn tất đồng bộ hóa.",
-  "mobile.sync.previewTruncated": "Bản xem trước bị cắt ngắn; tệp đầy đủ vẫn được giữ nguyên."
+  "mobile.sync.previewTruncated": "Bản xem trước bị cắt ngắn; tệp đầy đủ vẫn được giữ nguyên.",
+  "mobile.git.commitLocal": "Gửi commit cục bộ",
+  "mobile.sync.action": "Đồng bộ",
+  "mobile.sync.failedAt": "Thất bại {time}",
+  "mobile.properties.addRelationships": "Thêm mối quan hệ"
 }

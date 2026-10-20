@@ -272,3 +272,4 @@ proposed → active → superseded
 | [0247](0247-automatic-alpha-manual-stable-mobile-ota.md) | Automatic alpha and manual stable mobile OTA | active |
 | [0269](0269-mobile-ota-validated-main-range.md) | Mobile OTA validated main range | active |
 | [0270](0270-expiring-exact-codacy-approval-records.md) | Expiring exact Codacy approval records | temporary; expires 2026-10-21 |
+| [0271](0271-mobile-revisioned-pending-note-indicators.md) | Mobile revisioned pending-note indicators | active |

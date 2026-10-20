@@ -11,6 +11,7 @@ export const MobileVaultControlsContext = createContext<{
   lastSuccessAt?: number | null
   lastFailureAt?: number | null
   phase?: SyncPhase
+  pendingNotePaths?: ReadonlySet<string>
   historyAvailable?: boolean
   open: () => Promise<void>
   sync: () => Promise<void>

@@ -30,11 +30,11 @@ export function MobileGitControls({ manager }: { manager: GitControlsManager }) 
     {!preferences.settings.autoGit && <>
       <MobileTextInput label={mobileText('mobile.git.commitMessage')} value={message} onChangeText={setMessage} editable={!manager.busy} style={touchControl} testID="git-commit-message" />
       <View style={styles.row}>
-      <MobileButton disabled={manager.busy || !message.trim()} label={mobileText('status.commit.local')} icon={<GitCommit size={16} color={mobileColors.text} />} onPress={() => { void manager.commit(message) }} style={touchControl} testID="git-commit-local" />
+      <MobileButton disabled={manager.busy || !message.trim()} label={mobileText('mobile.git.commitLocal')} icon={<GitCommit size={16} color={mobileColors.text} />} onPress={() => { void manager.commit(message) }} style={touchControl} testID="git-commit-local" />
       <MobileButton disabled={manager.busy || !message.trim()} label={mobileText('mobile.git.commitAndSync')} onPress={() => { void manager.commit(message, true) }} style={touchControl} testID="git-commit-sync" />
       </View>
     </>}
-    <MobileButton disabled={manager.busy} label={mobileText('status.sync.now')} icon={<ArrowClockwise size={16} color={mobileColors.text} />} onPress={() => { void manager.sync() }} style={touchControl} testID="git-sync-now" />
+    <MobileButton disabled={manager.busy} label={mobileText('mobile.sync.action')} icon={<ArrowClockwise size={16} color={mobileColors.text} />} onPress={() => { void manager.sync() }} style={touchControl} testID="git-sync-now" />
   </View>
 }
 

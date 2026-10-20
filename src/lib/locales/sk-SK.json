@@ -1280,5 +1280,9 @@
   "mobile.sync.stale": "Po tomto porovnaní sa súbory zmenili. Pred uplatnením svojich volieb si pozrite najnovšie verzie.",
   "mobile.sync.review": "Skontrolovať konflikty",
   "mobile.sync.noConflicts": "Nezostali žiadne konfliktné súbory. Pokračujte a dokončite synchronizáciu.",
-  "mobile.sync.previewTruncated": "Náhľad je skrátený; celý súbor je zachovaný."
+  "mobile.sync.previewTruncated": "Náhľad je skrátený; celý súbor je zachovaný.",
+  "mobile.git.commitLocal": "Zaviesť lokálne",
+  "mobile.sync.action": "Synchronizovať",
+  "mobile.sync.failedAt": "Zlyhalo {time}",
+  "mobile.properties.addRelationships": "Pridať vzťahy"
 }

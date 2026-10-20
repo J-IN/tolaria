@@ -17,6 +17,8 @@ export function MobileVaultProvider({ children }: { children: ReactNode }) {
   const restoreError = !active.selection && !manager.catalog.pending ? manager.catalog.error : null
   // Sync progress must not make the workspace re-index a large vault.
   const workspace = useMemo(() => ({ selection: active.selection, open, restorePending }), [active.selection, open, restorePending])
+  const pending = manager.syncHistory.record.pendingPaths
+  const pendingNotePaths = useMemo(() => new Set((pending ?? []).map(change => change.path)), [pending])
   const controls = {
     rootUri: active.selection?.vaultRootUri,
     git: Boolean(active.git),
@@ -26,6 +28,7 @@ export function MobileVaultProvider({ children }: { children: ReactNode }) {
     lastSuccessAt: manager.syncHistory.record.lastSuccessAt,
     lastFailureAt: manager.syncHistory.record.lastFailureAt,
     phase: manager.phase,
+    pendingNotePaths,
     historyAvailable: manager.syncHistory.ready && !manager.syncHistory.failed,
     open,
     sync: manager.sync,

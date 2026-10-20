@@ -17,6 +17,7 @@ import { optionalNativeWorkspaceAccessModule } from '../../workspace/nativeWorks
 import { MobileConflictReview } from './MobileConflictReview'
 import { MobileCloneProgress } from './MobileCloneProgress'
 import { MobileVaultSyncHistory } from './MobileVaultSyncHistory'
+import { gitCloneProgressLabel } from '../../workspace/git/gitCloneProgressLabel'
 
 type VaultManager = ReturnType<typeof useMobileVaults>
 
@@ -35,7 +36,7 @@ export function MobileVaultManager({ manager }: { manager: VaultManager }) {
           <MobileGitControls manager={manager} />
           {manager.linked && <View style={styles.section}>
             <Text style={styles.detail}>{mobileText('mobile.vaults.folderLinked')}</Text>
-            <MobileButton disabled={manager.busy} label={mobileText('status.sync.now')} onPress={() => { void manager.sync() }} testID="linked-folder-sync" />
+            <MobileButton disabled={manager.busy} label={mobileText('mobile.sync.action')} onPress={() => { void manager.sync() }} testID="linked-folder-sync" />
           </View>}
           <View style={styles.section}>
             <MobileButton disabled={manager.busy} label={mobileText('status.vault.openLocal')} icon={<FolderOpen size={16} color={mobileColors.text} />} onPress={() => { void manager.openFolder() }} />
@@ -88,8 +89,14 @@ function VaultBusyProgress({ manager }: { manager: VaultManager }) {
   const styles = useMobileStyles(createVaultManagerStyles)
   const colors = useMobileColors()
   if (!manager.busy || manager.cloneProgress.running) return null
-  return <View style={[styles.content, styles.progress]} accessibilityLiveRegion="polite">
-    <ActivityIndicator color={colors.primary} /><Text style={styles.detail}>{progressLabel(manager.phase)}</Text>
+  const progress = gitCloneProgressLabel({ progress: manager.syncProgress.progress })
+  return <View style={[styles.content, styles.progress]} accessibilityLiveRegion="polite"
+    accessibilityRole="progressbar" accessibilityValue={progress.value}>
+    <ActivityIndicator color={colors.primary} />
+    <View style={{ flex: 1 }}>
+      <Text style={styles.detail}>{progressLabel(manager.phase)}</Text>
+      {progress.count && <Text style={styles.detail} testID="git-sync-progress-count">{progress.count}</Text>}
+    </View>
   </View>
 }
 
