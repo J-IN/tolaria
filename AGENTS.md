@@ -8,12 +8,12 @@ Use an exception only when a required service or analyzer remains unavailable af
 
 ### Task tracking (Linear)
 
-**Linear is the only live queue (cutover 2026-10-15).** Desktop work lives in team Tolaria (`TOL`), project **Tolaria Desktop**; web work in project Tolaria Web. Do not create or move Todoist tasks. The old Todoist Tolaria project is legacy (its Draft section is being triaged separately); a completed Todoist card commented "Moved to Linear: TOL-n" points to its Linear issue.
+**Linear is the only live queue (cutover 2026-10-15).** Desktop work lives in team Tolaria (`TOL`), project **Tolaria Desktop**; mobile work in **Tolaria Mobile**; web work in project Tolaria Web. Do not create or move Todoist tasks. The old Todoist Tolaria project is legacy (its Draft section is being triaged separately); a completed Todoist card commented "Moved to Linear: TOL-n" points to its Linear issue.
 
 **Linear** — workspace Refactoring, team Tolaria, issue key `TOL`.
 
 - Workflow: **Backlog** (not ready) → **Open** (ready for an agent) → **To Rework** (review failed: read the latest review comment and fix only that; pick these **before** Open) → **In Progress** (claimed) → **In Review** (pushed, awaiting Luca's QA) → **Done** / **Canceled** / **Duplicate**.
-- Claim an issue by moving it to In Progress **before** starting work, so agents never collide. Never start an issue that is already In Progress. Exception: follow the mandatory-rule exception protocol if Linear remains unavailable after one retry.
+- Claim an issue by moving it to In Progress **before** starting work. Never take another worker's In Progress issue; resume your own only when a prior claim comment identifies this worker and worktree. Re-read the issue after claiming and stop on a conflicting claim. Exception: follow the mandatory-rule exception protocol if Linear remains unavailable after one retry.
 - Labels: type `Bug` / `Feature` / `Improvement`; `mac-only` (leave for the Mac mini); `linux-ok`; `agent-blocked` (always with a comment saying why it is stuck and what would unblock it); `dubious` and `contributor-pr` (Backlog, awaiting Luca); Source group `Sentry` / `Canny` / `GitHub`. Exception: an unavailable Linear labeling service requires the same owner-approved exception protocol.
 - Reference the issue ID in commit messages, e.g. `fix: keep image width after restart (TOL-123)`.
 
@@ -31,12 +31,31 @@ Use an exception only when a required service or analyzer remains unavailable af
 ### Commits & pushes
 
 - Local work may happen on `main`, in detached HEAD worktrees, or in other temporary local states. The production path is still direct-to-main: final verified work is pushed to `origin/main`, with no PR branch flow.
-- Exception: long-lived mobile UI foundation work may use `mobile-ui-foundation` and push only to `origin/mobile-ui-foundation`.
-- On `mobile-ui-foundation`, routine hooks use the scoped mobile checks (`mobile:lint`, `mobile:typecheck`, `mobile:test`, and screenshot QA on push). Use `TOLARIA_MOBILE_FULL_GATE=1` before promotion or release-readiness work.
+- Mobile foundation is integrated into main. New mobile work follows the same direct-to-main path; the historical foundation-branch fast lane is not the current delivery workflow.
 - Commit every 20–30 min: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`
 - Pre-commit is a lightweight lint gate only. Pre-push runs the full check suite (build + tests + coverage + core Playwright smoke + CodeScene), preferably on three Chunk sidecar lanes for automatic test/coverage work: frontend lint/build/coverage, Rust coverage, and Playwright smoke. The goal is lower wall-clock time than local hooks while keeping each heavy gate isolated; keep local Playwright mainly for authoring, focused reproduction, or sidecar outages.
 - CircleCI is the authoritative outer-loop CI/CD system. `.circleci/config.yml` owns validation, native cross-platform release builds, GitHub Release publication, and Pages publication.
 - **A task is NOT done until `git push origin main` succeeds.** If the hook blocks: read the error, fix it (clippy, tests, CodeScene, build), commit the fix, push again. If a verified push is impossible, stop and obtain explicit repository-owner direction; do not use `--no-verify` without that recorded approval.
+
+### Mobile coding and release
+
+The general coding, quality, localization, analytics, credentials and completion rules apply unchanged. Read the mobile sections of `docs/ARCHITECTURE.md` and `docs/ABSTRACTIONS.md`; ADRs 0247, 0263 and 0272 define OTA delivery and channel selection.
+
+- Reuse `apps/mobile/src/components/ui` native primitives and `apps/mobile/src/ui` wrappers, not desktop DOM controls. Keep phone/tablet behavior on the shared controller/repository boundary. Run `pnpm mobile:lint`, `pnpm mobile:typecheck`, `pnpm mobile:test` and focused mobile regressions as well as the normal main push gates; scoped mobile checks do not replace them.
+- Verify affected native behavior separately on iPhone, iPad and Android. Browser checks are not native acceptance. Record task-specific owner delegation of manual QA honestly; it does not waive automated gates. A locked Mac leaves affected checks pending while independent work continues.
+- QA is confined to owned disposable vaults/simulators; existing user apps, containers and vault data stay untouched.
+- CircleCI publishes mobile-related main pushes to **Alpha** after its required gates; desktop-only changes are excluded from mobile publication. Confirm the actual publication receipt, source SHA, runtime and update ID before claiming delivery. Native/configuration/dependency changes that alter the runtime require a compatible signed binary, not an incompatible OTA.
+- Use one external **Tolaria Beta** TestFlight group. Settings defaults to **Stable**, with Alpha opt-in; selected channel and running update identity are distinct. Legacy Alpha-native binaries can launch embedded Alpha before preferences load. Retain runtime matching, safe editor flush/restart and Sentry artifact verification.
+- **Stable promotion remains manual**, authorized explicitly by the owner and using the existing exact-tested-Alpha-artifact republish/approval workflow. Never rebuild from moving main or redirect Stable to moving Alpha. Do not submit Apple compliance declarations or grant new credential permissions without explicit owner authorization.
+
+### Hourly mobile queue routine
+
+Keep the scheduled prompt limited to queue orchestration; this file owns coding and release policy.
+
+1. Reuse the routine's attached worktree and inspect current work. Resume its own identified unfinished claim before taking another issue; keep execution serial under the claim protocol above.
+2. Otherwise paginate **Tolaria Mobile** To Rework, then Open; order by priority (unspecified last), then oldest creation time. Skip others' assigned/delegated work, `agent-blocked` issues and unmet dependencies. Do not pull Backlog or In Review into implementation. Follow the claim protocol above.
+3. Implement the selected issue under this file's rules. On a blocker, record the evidence and required owner action in Linear, preserve a safe checkpoint, and continue independent eligible work without mixing partial changes or extending exceptions.
+4. Put verified implementation In Review with its release record, not self-approved Done. Report meaningful milestones or actionable blockers; stay quiet when the queue or status is unchanged. Resume remaining work on the next hourly run. Keep only one active mobile queue routine.
 
 ### TDD (mandatory)
 
