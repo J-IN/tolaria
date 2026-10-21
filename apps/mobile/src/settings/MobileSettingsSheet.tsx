@@ -13,6 +13,8 @@ import { mobileText } from '../i18n/mobileText'
 import { useMobileSettings } from './useMobileSettings'
 import { MobileAppearanceSettings } from './MobileAppearanceSettings'
 import { MobilePrivacySettings } from './MobilePrivacySettings'
+import { MobileUpdateSettings } from './MobileUpdateSettings'
+import { useMobileUpdateChannel } from './useMobileUpdateChannel'
 import { useMobileAnalytics } from '../analytics/useMobileAnalytics'
 import { MobileVaultManager } from '../components/vaults/MobileVaultManager'
 import type { useMobileVaults } from '../workspace/git/useMobileVaults'
@@ -21,6 +23,7 @@ import { useMobileModalDismiss } from '../workspace/useMobileModalDismiss'
 export function MobileSettingsSheet({ manager }: { manager: ReturnType<typeof useMobileVaults> }) {
   const { styles, mobileColors } = useMobileStyles(createThemeStyles)
   const preferences = useMobileSettings()
+  const updates = useMobileUpdateChannel(manager)
   const close = () => { if (manager.busy) return; manager.close(); preferences.close() }
   const opened = preferences.opened || manager.opened
   useMobileModalDismiss(close, opened)
@@ -40,6 +43,7 @@ export function MobileSettingsSheet({ manager }: { manager: ReturnType<typeof us
           <MobileVaultManager manager={manager} />
           {!manager.conflictReview && <>
           <MobileAppearanceSettings />
+          <MobileUpdateSettings updates={updates} />
           <AutoGitSettings gitAvailable={Boolean(manager.active.git)} />
           <MobilePrivacySettings />
           </>}

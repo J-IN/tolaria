@@ -2,7 +2,8 @@ import { createRoot } from 'react-dom/client'
 import { EditorContent } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
-import { TenTapStartKit, useTenTap } from '@10play/tentap-editor/web'
+import { useTenTap } from '@10play/tentap-editor/web'
+import { mobileWikilinkStartKit } from './MobileWysiwygLinkBridge.web'
 import { MobileCodeBlockBridge } from './MobileWysiwygCodeBlockBridge'
 import { MobileDiagramBridge } from './MobileWysiwygDiagramBridge'
 import { disposeMobileDiagramRenderer, MobileDiagramNodeView } from './mobileDiagramNodeView.web'
@@ -23,7 +24,7 @@ declare global {
 }
 
 const mobileTenTapExtensions = [
-  ...TenTapStartKit,
+  ...mobileWikilinkStartKit(),
   MobileCodeBlockBridge,
   MobileDiagramBridge.extendExtension({
     addNodeView(this: { editor: Editor }) {

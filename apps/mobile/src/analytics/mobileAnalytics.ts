@@ -1,6 +1,7 @@
 import type { MobileTelemetryContext } from './mobileTelemetryContext'
 
 export type MobileAnalyticsEvent =
+  | { name: 'mobile_update_channel_selected'; channel: 'stable' | 'alpha'; outcome: 'idle' | 'checking' | 'downloading' | 'ready' | 'current' | 'unavailable' | 'failed' | 'restarting' }
   | { name: 'note_created' | 'note_deleted' | 'vault_opened' | 'vault_switched' | 'search_used' | 'commit_made' }
   | { name: 'mobile_git_clone_cancel_requested' }
   | { name: 'file_preview_opened' | 'file_preview_failed'; preview_kind: 'image' | 'pdf' }
@@ -52,6 +53,11 @@ export function createMobileAnalytics({ configured, createId, platform, context,
 
 // Select properties explicitly: never spread caller objects into telemetry.
 function eventProperties(event: MobileAnalyticsEvent): Record<string, string> {
+  if (event.name === 'mobile_update_channel_selected') return { channel: event.channel, outcome: event.outcome }
+  return workspaceEventProperties(event)
+}
+
+function workspaceEventProperties(event: MobileAnalyticsEvent): Record<string, string> {
   if (event.name === 'theme_mode_changed') return { mode: event.mode }
   if (event.name === 'mobile_note_swipe_used') return { action: event.action }
   if (event.name === 'mobile_setting_changed') return { setting: event.setting }

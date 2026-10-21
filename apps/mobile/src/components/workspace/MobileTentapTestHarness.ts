@@ -2,7 +2,8 @@ import { createElement, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { EditorContent } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
-import { TenTapStartKit, useTenTap } from '@10play/tentap-editor/web'
+import { useTenTap } from '@10play/tentap-editor/web'
+import { mobileWikilinkStartKit } from './MobileWysiwygLinkBridge.web'
 import { MobileSlashExtension, readMobileSlash, runMobileSlash } from './MobileWysiwygSlashExtension'
 import { createMobileSlashBridge } from './MobileWysiwygSlashBridge'
 import { createMobileFindBridge } from './MobileWysiwygFindBridge'
@@ -11,7 +12,7 @@ import { MobileMathInlineBridge } from './MobileWysiwygMathBridge'
 import { MobileTableBridge } from './MobileWysiwygTableBridge'
 import { MobileCodeBlockBridge } from './MobileWysiwygCodeBlockBridge'
 
-const bridges = [...TenTapStartKit, MobileMathInlineBridge, MobileTableBridge, MobileCodeBlockBridge, createMobileSlashBridge({
+const bridges = [...mobileWikilinkStartKit(), MobileMathInlineBridge, MobileTableBridge, MobileCodeBlockBridge, createMobileSlashBridge({
   extension: MobileSlashExtension, read: readMobileSlash, run: runMobileSlash,
 }), createMobileFindBridge({ extension: MobileFindExtension, read: readMobileFind, run: applyMobileFindRequest })]
 

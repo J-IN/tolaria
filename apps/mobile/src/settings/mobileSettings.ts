@@ -4,10 +4,11 @@ export type MobileSettings = {
   crashReporting: boolean
   theme: 'system' | 'light' | 'dark'
   uiScale: 1.2
+  updateChannel: 'stable' | 'alpha'
 }
 
 export const defaultMobileSettings: MobileSettings = {
-  autoGit: false, analytics: false, crashReporting: false, theme: 'system', uiScale: 1.2,
+  autoGit: false, analytics: false, crashReporting: false, theme: 'system', uiScale: 1.2, updateChannel: 'stable',
 }
 
 export function parseMobileSettings(raw: string | null): MobileSettings {
@@ -22,6 +23,7 @@ export function parseMobileSettings(raw: string | null): MobileSettings {
     crashReporting: setting(value.crashReporting, [true, false], defaultMobileSettings.crashReporting),
     theme: setting(value.theme, ['system', 'light', 'dark'], defaultMobileSettings.theme),
     uiScale: defaultMobileSettings.uiScale,
+    updateChannel: setting(value.updateChannel, ['stable', 'alpha'], defaultMobileSettings.updateChannel),
   }
 }
 

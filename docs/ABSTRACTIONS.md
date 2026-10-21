@@ -740,6 +740,7 @@ Workspace surfaces now sit one level above those primitives:
 | `src/utils/externalUrl.ts` | Shared dependency-free external URL normalizer used by desktop link opening and mobile WYSIWYG link editing |
 | `MobileWysiwygMathHtml.ts` | Mobile KaTeX MathML rendering helper for native TenTap inline math nodes |
 | `MobileWysiwygTentapWebEditor.tsx` | Tolaria TenTap WebView entrypoint that bundles custom mobile Tiptap extensions |
+| `MobileWysiwygLinkBridge.web.ts` | Configures the production/test TenTap link schema to preserve internal wikilink addresses through HTML hydration, while retaining external-link validation |
 | `MobileWysiwygContentBridge.ts` | Silent programmatic-content bridge that prevents initial hydration from being persisted as a user edit |
 | `MobileWysiwygTentapEditorHtml.ts` | Generated custom TenTap WebView HTML used by the native WYSIWYG editor |
 | `build-wysiwyg-editor-html.mjs` | Builds TenTap from its shipped web source against the installed dependency graph; the in-memory build exposes provenance metadata without rewriting generated HTML during imports/tests |
@@ -754,6 +755,8 @@ configuration fingerprint. The publisher checks the returned EAS platform,
 branch, runtime and source commit before reporting success; a successful upload
 alone does not establish compatibility or native delivery.
 | `mobileUpdateMetadata.ts` | Projects update UUID, native fingerprint, channel and launch source into consent-governed build metadata without copying manifests or recovery messages |
+| `mobileUpdateChannel.ts` / `MobileUpdateSettings.tsx` | Stable-default saved channel selection, distinct running-version metadata, compatible OTA download and explicit restart; native runtime adapter overrides only the embedded channel header (ADR 0272) |
+| `prepareMobileUpdateRestart.ts` | Freezes and flushes active editors, drains pending workspace writes and restores the prior editing barrier on failure; update preparation never commits, syncs or changes vault formats |
 | `nativeWysiwyg*Probe.ts` | Native Expo simulator proof models for mobile editor behavior that must be verified outside React Native Web |
 | `TabletWorkspace` | Tablet shell that owns selected-note state, panel layout, action-sheet forms, and editable snapshot state. `TabletWorkspacePanels` composes the existing sidebar/list/editor/inspector without owning persistence; `TabletWorkspaceActionSheetHost` maps existing form values and commands for both phone and tablet. `TabletWorkspaceStyles` keeps their shared numeric layout contract. |
 | `tabletPanelResize` | Reconciles current pane visibility with a resized window and the existing readable-editor minimum; preserves hidden panes when widening |

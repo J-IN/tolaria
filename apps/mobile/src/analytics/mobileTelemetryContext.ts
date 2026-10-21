@@ -10,7 +10,7 @@ export function mobileTelemetryContext(input: Input) {
     device_family: choice(input.deviceFamily, ['phone', 'tablet', 'desktop'], 'unknown'),
     app_version: version(input.version),
     build_number: version(input.build),
-    release_channel: choice(input.channel, ['alpha', 'stable'], 'alpha'),
+    release_channel: choice(input.updates?.channel ?? undefined, ['alpha', 'stable'], choice(input.channel, ['alpha', 'stable'], 'alpha')),
     distribution: choice(input.distribution, ['internal', 'testflight', 'store'], 'internal'),
     ...(input.updates ? mobileUpdateMetadata(input.updates) : {}),
   }
