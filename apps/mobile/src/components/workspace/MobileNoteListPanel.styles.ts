@@ -3,6 +3,7 @@ import type { MobileMetrics } from '../../ui/mobileMetrics'
 import type { MobileColors } from '../../ui/theme/mobilePalette'
 import { mobileRadius } from '../../ui/tokens'
 import { mobileNoteListCreateChrome } from './MobileNoteListPanelChrome'
+import { mobilePaneFooterFrame } from './mobilePaneFooterLayout'
 
 export function createActionStyles(mobileColors: MobileColors, metrics: MobileMetrics) {
   const diameter = metrics.size(mobileNoteListCreateChrome.diameter)
@@ -64,20 +65,19 @@ function createFilterStyles(mobileColors: MobileColors, metrics: MobileMetrics) 
   const { space: mobileSpace, type: mobileType } = metrics
   return StyleSheet.create({
     filterBar: {
-      alignItems: 'center',
+      ...mobilePaneFooterFrame(),
       flexDirection: 'row',
       justifyContent: 'center',
       gap: mobileSpace.sm,
       borderTopColor: mobileColors.border,
       borderTopWidth: StyleSheet.hairlineWidth,
       paddingHorizontal: mobileSpace.lg,
-      paddingVertical: mobileSpace.md,
     },
     filterPill: {
       alignItems: 'center',
       flexDirection: 'row',
       gap: metrics.size(6),
-      minHeight: 28,
+      minHeight: 44,
       borderRadius: mobileRadius.pill,
       paddingHorizontal: metrics.size(10),
       paddingVertical: metrics.size(4),

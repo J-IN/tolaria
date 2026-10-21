@@ -890,6 +890,16 @@ off-screen transitions so browser layout overflow cannot change gesture bounds.
 Shared native/browser navigation test helpers perform drags and wait for the
 destination geometry rather than activating removed toolbar controls.
 
+Mobile pane footers share `mobilePaneFooterLayout.ts`: a 48-point control row
+centers the sidebar utilities, note-list filters and compact/wide formatting
+actions. Safe-bottom clearance is added once, by the list pane or the owning
+sidebar/editor footer; editor hosts add no second vertical padding. Sidebar
+utilities remain transparent and floating over scrollable content.
+Mobile Settings keeps Auto Git inside the active vault's Git controls and the
+local-folder action inside Available Vaults, including the empty catalog state.
+The sidebar sync pill owns the compact sync summary; Settings retains operation
+errors and conflict controls without repeating the last-sync/commit overview.
+
 Mobile deep-link copying follows the same boundary. `mobileDeepLinks.ts` owns URL construction from `MobileWorkspaceSnapshot.source` and the selected note path, and `mobileClipboard.ts` owns the Expo Clipboard call plus deterministic QA logging. Components such as `MobileWorkspaceActionSheet` receive `onCopyDeepLink` and do not import clipboard or URL-building modules directly.
 
 Mobile PDF export uses the same callback boundary. `mobilePdfExport.ts` converts the selected `MobileNote` into frontmatter-free HTML with the mobile Markdown body renderer, records deterministic web/Playwright export attempts, and calls `expo-print` plus `expo-sharing` only from the controller-owned action path. Generated PDFs are temporary platform share artifacts and do not mutate the vault.

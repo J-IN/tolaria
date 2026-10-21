@@ -8,10 +8,14 @@ import { mobileText } from '../../i18n/mobileText'
 import { useMobileColors, useMobileStyles } from '../../ui/theme/useMobileTheme'
 import type { useMobileVaults } from '../../workspace/git/useMobileVaults'
 import { createVaultManagerStyles } from './vaultManagerStyles'
+import { optionalNativeWorkspaceAccessModule } from '../../workspace/nativeWorkspaceAccess'
 
 type Manager = ReturnType<typeof useMobileVaults>
+type SavedVaultsManager = Pick<Manager, 'active' | 'busy' | 'openFolder' | 'select' | 'selectLocal' | 'forget'> & {
+  catalog: Pick<Manager['catalog'], 'localVaults' | 'vaults'>
+}
 
-export function MobileSavedVaults({ manager }: { manager: Manager }) {
+export function MobileSavedVaults({ manager }: { manager: SavedVaultsManager }) {
   const styles = useMobileStyles(createVaultManagerStyles)
   const colors = useMobileColors()
   const [removing, setRemoving] = useState<{ id: string; label: string } | null>(null)
@@ -19,7 +23,6 @@ export function MobileSavedVaults({ manager }: { manager: Manager }) {
     ...manager.catalog.localVaults.map(vault => ({ ...vault, kind: 'local', select: () => manager.selectLocal(vault) })),
     ...manager.catalog.vaults.map(vault => ({ ...vault, kind: 'git', select: () => manager.select(vault) })),
   ]
-  if (!vaults.length) return null
   return <View style={styles.section} testID="saved-vaults">
     <Text style={styles.label}>{mobileText('status.vault.availableHeader')}</Text>
     {vaults.map(vault => {
@@ -33,6 +36,9 @@ export function MobileSavedVaults({ manager }: { manager: Manager }) {
           onPress={() => setRemoving(vault)} testID={`forget-vault-${vault.id}`}><X size={16} color={colors.textMuted} /></MobileIconButton>}
       </View>
     })}
+    <MobileButton disabled={manager.busy} label={mobileText('status.vault.openLocal')}
+      icon={<FolderOpen size={16} color={colors.text} />} onPress={() => { void manager.openFolder() }} testID="open-local-vault" />
+    <Text style={styles.detail}>{mobileText(optionalNativeWorkspaceAccessModule()?.syncLinkedWorkspace ? 'mobile.vaults.folderOpenHint' : 'mobile.vaults.localCopy')}</Text>
     {removing && <View style={styles.section} testID="forget-vault-confirmation">
       <Text style={styles.detail}>{mobileText('status.vault.removeConfirmMessage').replace('{label}', removing.label)}</Text>
       <View style={styles.row}>

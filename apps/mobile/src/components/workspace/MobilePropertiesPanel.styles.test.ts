@@ -18,8 +18,8 @@ it.each([1, 1.2] as const)('keeps real relationship touch targets at scale %s wi
   expect(styles.row.borderRadius).toBe(metrics.relationship.rowRadius)
   expect(styles.remove.alignItems).toBe('flex-end')
   expect(styles.row.paddingRight).toBe(0)
-  expect(styles.background.top).toBe(6)
-  expect(styles.background.bottom).toBe(6)
+  expect(styles.background.top).toBe(2)
+  expect(styles.background.bottom).toBe(2)
 })
 
 it('never shrinks a larger minimum row height back to the touch minimum', () => {

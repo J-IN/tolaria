@@ -148,6 +148,7 @@ type NotePropertiesProps = {
 }
 
 function NoteProperties(props: NotePropertiesProps) {
+  const { propertyStyles } = useMobileStyles(createPropertyPanelStyles)
   const { layoutProbe, note, onFixInvalidFrontmatter, onInitializeProperties, onSelectNote, referenceGroups, typeDefinitions } = props
   const frontmatterState = mobileFrontmatterState(note)
   const propertySlots = mobileInspectorPropertySlots(note, typeDefinitions)
@@ -177,8 +178,10 @@ function NoteProperties(props: NotePropertiesProps) {
       <StandardPropertyRows missingTypeName={missingTypeName} props={props} />
       <CustomPropertyRows propertySlots={propertySlots} props={props} />
       <PropertyActionRow label={mobileText('inspector.properties.addProperty')} layoutProbe={layoutProbe} layoutProbeId="properties.action.add-property" testID="property-action-add-property" onPress={() => props.onAddProperty()} />
-      <RelationshipPropertyRows relationshipSlots={relationshipSlots} props={props} />
-      <PropertyActionsAndReferences props={props} />
+      <View style={propertyStyles.relationshipGroup} testID="properties-relationships-group">
+        <RelationshipPropertyRows relationshipSlots={relationshipSlots} props={props} />
+        <PropertyActionsAndReferences props={props} />
+      </View>
     </>
   )
 }

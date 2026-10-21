@@ -3,11 +3,13 @@ import { useState } from 'react'
 import { View } from 'react-native'
 import { ArrowClockwise, GitCommit } from 'phosphor-react-native'
 import { Text } from '../ui/text'
+import { Switch } from '../ui/switch'
 import { mobileText } from '../../i18n/mobileText'
 import { MobileButton } from '../../ui/MobileButton'
 import { MobileTextInput } from '../../ui/MobileTextInput'
 
 import { useMobileSettings } from '../../settings/useMobileSettings'
+import { useMobileAnalytics } from '../../analytics/useMobileAnalytics'
 import type { useMobileVaults } from '../../workspace/git/useMobileVaults'
 import { createVaultManagerStyles } from './vaultManagerStyles'
 
@@ -26,6 +28,7 @@ export function MobileGitControls({ manager }: { manager: GitControlsManager }) 
       <Text style={styles.detail}>{mobileText(preferences.settings.autoGit ? 'mobile.git.auto' : 'mobile.git.manual')}</Text>
       {manager.lastCommitId && <Text selectable style={styles.detail}>{manager.lastCommitId}</Text>}
     </View>
+    <AutoGitSettings disabled={manager.busy} />
     {manager.status === 'committed' && <Text accessibilityLiveRegion="polite" style={styles.detail} testID="git-commit-success">{mobileText('mobile.git.localCommit')}</Text>}
     {!preferences.settings.autoGit && <>
       <MobileTextInput label={mobileText('mobile.git.commitMessage')} value={message} onChangeText={setMessage} editable={!manager.busy} style={touchControl} testID="git-commit-message" />
@@ -39,3 +42,20 @@ export function MobileGitControls({ manager }: { manager: GitControlsManager }) 
 }
 
 const touchControl = { minHeight: 44 }
+
+function AutoGitSettings({ disabled }: { disabled: boolean }) {
+  const styles = useMobileStyles(createVaultManagerStyles)
+  const preferences = useMobileSettings()
+  const analytics = useMobileAnalytics()
+  return <View style={styles.section}>
+    <View style={styles.row}>
+      <Text style={styles.detail}>{mobileText('settings.autogit.enable')}</Text>
+      <Switch checked={preferences.settings.autoGit} disabled={disabled || !preferences.ready || preferences.saving}
+        accessibilityLabel={mobileText('settings.autogit.enable')} testID="settings-auto-git"
+        onCheckedChange={(autoGit) => { void preferences.update({ autoGit }).then(saved => {
+          if (saved) analytics.capture({ name: 'mobile_setting_changed', setting: 'autoGit' })
+        }) }} />
+    </View>
+    <Text style={styles.detail}>{mobileText('mobile.settings.autoGitForeground')}</Text>
+  </View>
+}

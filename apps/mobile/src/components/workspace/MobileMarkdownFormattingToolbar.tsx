@@ -14,6 +14,7 @@ import { formattingToolbarTouchSize } from './mobileFormattingToolbarModel'
 import { useMobileBottomInset } from '../../ui/useMobileBottomInset'
 import { useMobileDeviceLayout } from '../../ui/useMobileDeviceLayout'
 import { MobileCompactFormattingToolbar } from './MobileCompactFormattingToolbar'
+import { mobilePaneFooterFrame, mobilePaneFooterRowHeight } from './mobilePaneFooterLayout'
 
 const nativeOnlyFormattingActions = new Set<MobileMarkdownFormatAction>([
   'tableAddColumnAfter',
@@ -60,12 +61,12 @@ function WideFormattingToolbar({
     <ScrollView
       accessibilityLabel={mobileText('editor.formatting.toolbar')}
       alwaysBounceHorizontal={false}
-      contentContainerStyle={[styles.toolbarContent, { paddingBottom: Math.max(styles.toolbarContent.paddingBottom, bottom) }]}
+      contentContainerStyle={[styles.toolbarContent, mobilePaneFooterFrame(bottom)]}
       horizontal
       keyboardShouldPersistTaps="always"
       {...formattingProbeProps(layoutProbe, metricId)}
       showsHorizontalScrollIndicator={false}
-      style={styles.toolbarViewport}
+      style={[styles.toolbarViewport, { height: mobilePaneFooterRowHeight + bottom }]}
       testID="editor-formatting-toolbar"
     >
       {formattingCommands.filter((command) => visibleActions.has(command.action)).map((command) => (
@@ -105,7 +106,9 @@ function createThemeStyles(mobileColors: MobileColors, metrics: MobileMetrics) {
   const styles = StyleSheet.create({
     actionProbe: {
       height: formattingToolbarTouchSize,
+      minHeight: formattingToolbarTouchSize,
       width: formattingToolbarTouchSize,
+      minWidth: formattingToolbarTouchSize,
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 4,
@@ -114,7 +117,6 @@ function createThemeStyles(mobileColors: MobileColors, metrics: MobileMetrics) {
     toolbarContent: {
       flexDirection: 'row',
       gap: mobileSpace.xs,
-      paddingBottom: mobileSpace.xs,
     },
     toolbarViewport: {
       flexGrow: 0,

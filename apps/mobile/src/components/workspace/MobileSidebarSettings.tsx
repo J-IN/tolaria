@@ -9,13 +9,14 @@ import { Button } from '../ui/button'
 import { Text } from '../ui/text'
 import { MobileVaultControlsContext, MobileVaultDisplayContext } from '../../workspace/MobileVaultContext'
 import { sidebarSyncPresentation } from './mobileSidebarSyncStatus'
+import { mobilePaneFooterFrame } from './mobilePaneFooterLayout'
 
 export function MobileSidebarSettings({ onOpenCommandPalette }: { onOpenCommandPalette?: () => void }) {
   const preferences = useMobileSettings()
   const colors = useMobileColors()
   const insets = useSafeAreaInsets()
   const buttonStyle = [styles.button, { backgroundColor: colors.control }]
-  return <View pointerEvents="box-none" style={[styles.footer, { paddingBottom: Math.max(8, insets.bottom) }]} testID="sidebar-settings">
+  return <View pointerEvents="box-none" style={[styles.footer, mobilePaneFooterFrame(insets.bottom)]} testID="sidebar-settings">
     <SidebarSyncPill autoGit={preferences.settings.autoGit} />
     {onOpenCommandPalette && <Button accessibilityLabel={mobileText('menu.view.commandPalette')} size="icon" variant="secondary" style={buttonStyle}
       className="h-12 w-12 rounded-[24px] sm:h-12 sm:w-12"
@@ -61,9 +62,9 @@ function SidebarSyncPill({ autoGit }: { autoGit: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  footer: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 6, paddingTop: 8, paddingHorizontal: 8, flexShrink: 0 },
+  footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 6, paddingHorizontal: 8 },
   button: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  sync: { flex: 1, minWidth: 0, minHeight: 48, height: 'auto', paddingHorizontal: 8, paddingVertical: 8,
+  sync: { flex: 1, minWidth: 0, minHeight: 48, height: 48, paddingHorizontal: 8, paddingVertical: 0,
     borderRadius: 24, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'flex-start' },
   syncText: { flex: 1, minWidth: 0 },
   destinationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },

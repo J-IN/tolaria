@@ -375,7 +375,6 @@ function createThemeStyles(mobileColors: MobileColors, metrics: MobileMetrics) {
       borderTopColor: mobileColors.border,
       borderTopWidth: StyleSheet.hairlineWidth,
       paddingHorizontal: mobileSpace.md,
-      paddingTop: mobileSpace.xs,
     },
   })
   return { mobileColors, nativeEditorStyles }

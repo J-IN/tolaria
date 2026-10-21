@@ -154,7 +154,6 @@ function createSuggestionStyles(mobileColors: MobileColors, metrics: MobileMetri
       borderTopWidth: StyleSheet.hairlineWidth,
       backgroundColor: mobileColors.editor,
       paddingHorizontal: mobileSpace.md,
-      paddingTop: mobileSpace.xs,
     },
   })
 }

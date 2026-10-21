@@ -68,7 +68,7 @@ function createEmptyStateStyles(mobileColors: MobileColors, metrics: MobileMetri
 }
 
 function createRelationshipStyles(metrics: MobileMetrics) {
-  const { property: desktopPropertyParity, space: mobileSpace, relationship: desktopRelationshipParity } = metrics
+  const { property: desktopPropertyParity, relationship: desktopRelationshipParity } = metrics
   return StyleSheet.create({
     remove: {
       minHeight: 44,
@@ -90,8 +90,8 @@ function createRelationshipStyles(metrics: MobileMetrics) {
     },
     background: {
       position: 'absolute',
-      top: 6,
-      bottom: 6,
+      top: 2,
+      bottom: 2,
       left: 0,
       right: 0,
       borderRadius: desktopRelationshipParity.rowRadius,
@@ -109,7 +109,7 @@ function createRelationshipStyles(metrics: MobileMetrics) {
       fontSize: desktopRelationshipParity.textFontSize,
       fontWeight: desktopRelationshipParity.textFontWeight,
     },
-    values: { alignItems: 'stretch', gap: mobileSpace.xs },
+    values: { alignItems: 'stretch', gap: 0 },
   })
 }
 
@@ -244,6 +244,12 @@ function createActionStyles(mobileColors: MobileColors, metrics: MobileMetrics) 
 function createSectionStyles(mobileColors: MobileColors, metrics: MobileMetrics) {
   const { property: desktopPropertyParity, space: mobileSpace } = metrics
   return StyleSheet.create({
+    relationshipGroup: {
+      marginTop: mobileSpace.sm,
+      paddingTop: mobileSpace.sm,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: mobileColors.border,
+    },
     sectionLabel: {
       color: mobileColors.textMuted,
       fontSize: desktopPropertyParity.labelTextSize,

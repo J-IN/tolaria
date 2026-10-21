@@ -14,6 +14,7 @@ import type { MobileMarkdownFormatAction } from '../../workspace/mobileMarkdownF
 import { formattingCommands, type FormattingCommand } from './mobileFormattingCommands'
 import { formattingToolbarGroups, formattingToolbarTouchSize, type FormattingToolbarGroup } from './mobileFormattingToolbarModel'
 import { useMobileKeyboardInset } from '../../ui/useMobileBottomInset'
+import { mobilePaneFooterFrame, mobilePaneFooterRowHeight } from './mobilePaneFooterLayout'
 
 type Props = {
   actions: readonly MobileMarkdownFormatAction[]
@@ -39,13 +40,13 @@ export function MobileCompactFormattingToolbar(props: Props) {
   const { bottom, keyboardVisible } = useMobileKeyboardInset()
   const groups = formattingToolbarGroups(props.actions, props.inTable)
   return (
-    <View style={styles.container} testID="editor-formatting-toolbar" {...metricProps(props)}>
+    <View style={[styles.container, mobilePaneFooterFrame(bottom)]} testID="editor-formatting-toolbar" {...metricProps(props)}>
       <ScrollView
         horizontal
         accessibilityLabel={mobileText('editor.formatting.toolbar')}
         keyboardShouldPersistTaps="always"
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[styles.row, { paddingBottom: Math.max(styles.row.paddingBottom, bottom) }]}
+        contentContainerStyle={styles.row}
         style={styles.viewport}
         testID="editor-formatting-actions"
       >
@@ -122,10 +123,11 @@ function metricProps(props: Props, segment?: string) {
 function createThemeStyles(mobileColors: MobileColors, metrics: MobileMetrics) {
   const { space: mobileSpace } = metrics
   const styles = StyleSheet.create({
-    container: { flexDirection: 'row', alignItems: 'flex-start', flexShrink: 0 },
-    viewport: { flex: 1, minWidth: 0 },
-    row: { flexDirection: 'row', gap: mobileSpace.xs, paddingBottom: mobileSpace.xs },
-    action: { width: formattingToolbarTouchSize, height: formattingToolbarTouchSize, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
+    container: { flexDirection: 'row' },
+    viewport: { flex: 1, minWidth: 0, height: mobilePaneFooterRowHeight },
+    row: { ...mobilePaneFooterFrame(), flexDirection: 'row', gap: mobileSpace.xs },
+    action: { width: formattingToolbarTouchSize, height: formattingToolbarTouchSize, minWidth: formattingToolbarTouchSize,
+      minHeight: formattingToolbarTouchSize, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
     selected: { backgroundColor: mobileColors.primarySoft },
     label: { color: mobileColors.text, fontSize: metrics.size(13), flexShrink: 1, flexGrow: 1 },
     icon: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },

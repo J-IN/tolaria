@@ -1,7 +1,7 @@
 import { useMobileColors, useMobileStyles } from '../../ui/theme/useMobileTheme'
 import { useState } from 'react'
 import { ActivityIndicator, Keyboard, View } from 'react-native'
-import { CloudArrowDown, FolderOpen } from 'phosphor-react-native'
+import { CloudArrowDown } from 'phosphor-react-native'
 import { Text } from '../ui/text'
 import { mobileText } from '../../i18n/mobileText'
 import { MobileButton } from '../../ui/MobileButton'
@@ -13,17 +13,14 @@ import { MobileGitHubAccount } from './MobileGitHubAccount'
 import { MobileGitControls } from './MobileGitControls'
 import { createVaultManagerStyles } from './vaultManagerStyles'
 import { MobileSavedVaults } from './MobileSavedVaults'
-import { optionalNativeWorkspaceAccessModule } from '../../workspace/nativeWorkspaceAccess'
 import { MobileConflictReview } from './MobileConflictReview'
 import { MobileCloneProgress } from './MobileCloneProgress'
-import { MobileVaultSyncHistory } from './MobileVaultSyncHistory'
 import { gitCloneProgressLabel } from '../../workspace/git/gitCloneProgressLabel'
 
 type VaultManager = ReturnType<typeof useMobileVaults>
 
 export function MobileVaultManager({ manager }: { manager: VaultManager }) {
   const styles = useMobileStyles(createVaultManagerStyles)
-  const mobileColors = useMobileColors()
   return <View testID="vault-manager">
         <MobileCloneProgress clone={manager.cloneProgress} />
         <VaultBusyProgress manager={manager} />
@@ -31,17 +28,12 @@ export function MobileVaultManager({ manager }: { manager: VaultManager }) {
           files={manager.conflictReview.value.files} busy={manager.busy} failure={manager.conflictFailure}
           cancel={manager.cancelConflictReview} apply={choices => { void manager.resolveConflicts(choices) }} /> : <View style={styles.settingsContent}>
           <VaultOperationStatus manager={manager} />
-          <MobileVaultSyncHistory manager={manager} />
           <ReviewConflictsButton manager={manager} />
           <MobileGitControls manager={manager} />
           {manager.linked && <View style={styles.section}>
             <Text style={styles.detail}>{mobileText('mobile.vaults.folderLinked')}</Text>
             <MobileButton disabled={manager.busy} label={mobileText('mobile.sync.action')} onPress={() => { void manager.sync() }} testID="linked-folder-sync" />
           </View>}
-          <View style={styles.section}>
-            <MobileButton disabled={manager.busy} label={mobileText('status.vault.openLocal')} icon={<FolderOpen size={16} color={mobileColors.text} />} onPress={() => { void manager.openFolder() }} />
-            <Text style={styles.detail}>{mobileText(optionalNativeWorkspaceAccessModule()?.syncLinkedWorkspace ? 'mobile.vaults.folderOpenHint' : 'mobile.vaults.localCopy')}</Text>
-          </View>
           <MobileSavedVaults manager={manager} />
           <MobileGitHubAccount account={manager.account} disabled={manager.busy} clone={manager.clone} />
           <CloneRepository manager={manager} />
