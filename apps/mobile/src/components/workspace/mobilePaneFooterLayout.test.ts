@@ -1,11 +1,11 @@
 import { expect, it } from 'vitest'
 import { mobilePaneFooterFrame, mobilePaneFooterRowHeight } from './mobilePaneFooterLayout'
 
-it.each([0, 21, 34])('keeps the same control row above a %s-point home-indicator inset', bottom => {
+it.each([0, 21, 34])('centers controls within the full footer including a %s-point inset', bottom => {
   const frame = mobilePaneFooterFrame(bottom)
   expect(frame.height).toBe(48 + bottom)
-  expect(frame.paddingBottom).toBe(bottom)
-  expect(Number(frame.height) - Number(frame.paddingBottom)).toBe(mobilePaneFooterRowHeight)
+  expect(frame.paddingBottom).toBe(0)
+  expect(Number(frame.height) - Number(frame.paddingBottom)).toBe(mobilePaneFooterRowHeight + bottom)
   expect(frame.alignItems).toBe('center')
   expect(frame.flexShrink).toBe(0)
 })

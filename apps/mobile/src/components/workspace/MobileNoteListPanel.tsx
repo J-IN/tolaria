@@ -1,6 +1,7 @@
 import { createThemeStyles } from './MobileNoteListPanel.styles'
 import { MobileCreateNoteButton } from './MobileCreateNoteButton'
 import { MobilePendingNoteIndicator } from './MobilePendingNoteIndicator'
+import { mobilePaneFooterFrame } from './mobilePaneFooterLayout'
 import { useMobileNoteListBulkSelection, type MobileNoteListBulkActions } from './useMobileNoteListSelection'
 import { useMobileColors, useMobileStyles } from '../../ui/theme/useMobileTheme'
 import { useMemo, type ReactNode } from 'react'
@@ -78,12 +79,10 @@ export function MobileNoteListPanel(props: MobileNoteListPanelProps) {
     neighborhood = null,
     noteListFilter = 'open',
     noteListFilterCounts = { archived: 0, open: 0 },
-    noteListFilterVisible = false,
     notes,
     onOpenCreateNote,
     onOpenSearch,
     onOpenVault,
-    onNoteListFilterChange,
     onSelectNote,
     propertyDisplayModes,
     searchQuery,
@@ -91,6 +90,7 @@ export function MobileNoteListPanel(props: MobileNoteListPanelProps) {
     title = mobileCopy.inbox,
     typeDefinitions,
   } = props
+  const onFilterChange = noteListFilterAction(props)
   const activeNoteId = selectedNoteId ?? notes[0]?.id ?? null
   const layoutProbe = useMobileLayoutProbe(layoutProbeEnabled)
   const bulkSelection = useMobileNoteListBulkSelection({
@@ -101,7 +101,7 @@ export function MobileNoteListPanel(props: MobileNoteListPanelProps) {
   })
 
   return (
-    <MobilePanel {...layoutProbe.probe('noteList.panel')} style={[panelStyles.panel, compact ? panelStyles.panelCompact : null, fullWidth ? panelStyles.panelFullWidth : null, { paddingBottom: bottom }]} testID="note-list-panel">
+    <MobilePanel {...layoutProbe.probe('noteList.panel')} style={[panelStyles.panel, compact ? panelStyles.panelCompact : null, fullWidth ? panelStyles.panelFullWidth : null, { paddingBottom: onFilterChange ? 0 : bottom }]} testID="note-list-panel">
       <MobileToolbar testID="note-list-toolbar">
         {leading}
         <View style={styles.toolbarTitleBlock}>
@@ -133,11 +133,11 @@ export function MobileNoteListPanel(props: MobileNoteListPanelProps) {
         <MobileCreateNoteButton visible={showCreateAction && bulkSelection.selectedNotes.length === 0} onPress={onOpenCreateNote} />
       </View>
       <BulkSelectionBar bulkActions={bulkActions} bulkSelection={bulkSelection} />
-      {noteListFilterVisible && onNoteListFilterChange ? (
+      {onFilterChange ? (
         <NoteListFilterPills
           active={noteListFilter}
           counts={noteListFilterCounts}
-          onChange={onNoteListFilterChange}
+          onChange={onFilterChange}
         />
       ) : null}
       {layoutProbeEnabled ? <MobileLayoutProbeReadout metrics={layoutProbe.metrics} testID="note-list-layout-metrics" /> : null}
@@ -159,8 +159,9 @@ type NoteListFilterPillsProps = {
 
 function NoteListFilterPills({ active, counts, onChange }: NoteListFilterPillsProps) {
   const { styles } = useMobileStyles(createThemeStyles)
+  const { bottom } = useSafeAreaInsets()
   return (
-    <View accessibilityRole="tablist" style={styles.filterBar} testID="note-list-filter-pills">
+    <View accessibilityRole="tablist" style={[styles.filterBar, mobilePaneFooterFrame(bottom)]} testID="note-list-filter-pills">
       {mobileNoteListFilterOptions.map((option) => {
         const selected = active === option.value
         return (
@@ -532,3 +533,7 @@ const panelStyles = StyleSheet.create({
     width: '100%',
   },
 })
+
+function noteListFilterAction({ noteListFilterVisible, onNoteListFilterChange }: MobileNoteListPanelProps) {
+  return noteListFilterVisible ? onNoteListFilterChange : undefined
+}
