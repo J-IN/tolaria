@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useManagedVaultCatalog } from './useManagedVaultCatalog'
 import type { WorkspaceSnapshotPreview } from '../workspaceSnapshotPreview'
 import type { NativeWorkspaceSelection } from '../nativeWorkspacePicker'
+import { workspaceScenarioForId } from '../../fixtures/workspaceFixtures'
 
 const source = vi.hoisted(() => ({ initialize: vi.fn(), local: vi.fn(), git: vi.fn(), prepare: vi.fn(), preview: vi.fn() }))
 vi.mock('./managedLocalStorage', () => ({ initializeLocalVaultCatalog: source.initialize, managedLocalSelection: source.local }))
@@ -57,6 +58,32 @@ it('still waits for fresh preparation on a cache miss', async () => {
   const catalog = await mountCatalog()
   expect(catalog.current).toMatchObject({ pending: true, preview: null, restored: null })
   await act(async () => prepared.resolve(selection))
+  expect(catalog.current.restored?.selection).toBe(selection)
+})
+
+it('carries the chosen cached note into the fresh selection without replaying cached source', async () => {
+  const notes = workspaceScenarioForId(null).notes
+  const cached = { ...preview, notes }
+  source.preview.mockResolvedValue(cached)
+  const prepared = deferred<NativeWorkspaceSelection>()
+  source.prepare.mockReturnValue(prepared.promise)
+  const catalog = await mountCatalog()
+  await act(async () => catalog.current.selectPreviewNote(notes[1].id))
+  expect(catalog.current.preview?.selectedNoteId).toBe(notes[1].id)
+  expect(catalog.current.restored).toBeNull()
+  await act(async () => prepared.resolve(selection))
+  expect(catalog.current.restored?.selection).toEqual({ ...selection, selectedNoteId: notes[1].id })
+  expect(catalog.current.preview).toBeNull()
+})
+
+it('ignores unknown cached selections and never changes an active selection through the preview callback', async () => {
+  const prepared = deferred<NativeWorkspaceSelection>()
+  source.prepare.mockReturnValue(prepared.promise)
+  const catalog = await mountCatalog()
+  await act(async () => catalog.current.selectPreviewNote('not-in-preview'))
+  expect(catalog.current.preview).toBe(preview)
+  await act(async () => prepared.resolve(selection))
+  await act(async () => catalog.current.selectPreviewNote('not-in-preview'))
   expect(catalog.current.restored?.selection).toBe(selection)
 })
 

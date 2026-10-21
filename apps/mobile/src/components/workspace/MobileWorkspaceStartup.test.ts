@@ -4,9 +4,12 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { MobileWorkspaceStartup } from './MobileWorkspaceStartup'
 import type { WorkspaceSnapshotPreview } from '../../workspace/workspaceSnapshotPreview'
+import { workspaceScenarioForId } from '../../fixtures/workspaceFixtures'
 
 const device = vi.hoisted(() => ({ tablet: false, width: 390, height: 844 }))
 const panels = vi.hoisted(() => ({ sidebar: vi.fn(), list: vi.fn() }))
+const capture = vi.hoisted(() => vi.fn())
+vi.mock('../../analytics/useMobileAnalytics', () => ({ useMobileAnalytics: () => ({ capture }) }))
 vi.mock('react-native', () => ({
   View: ({ children, testID, pointerEvents, accessibilityElementsHidden, accessibilityState }: {
     children?: ReactNode; testID?: string; pointerEvents?: string; accessibilityElementsHidden?: boolean; accessibilityState?: { busy: boolean }
@@ -41,22 +44,29 @@ beforeEach(() => {
   device.height = 844
   panels.sidebar.mockReset().mockReturnValue(null)
   panels.list.mockReset().mockReturnValue(null)
+  capture.mockReset()
 })
 afterEach(async () => {
   for (const root of roots.splice(0)) await act(async () => root.unmount())
   vi.unstubAllGlobals()
 })
 
-it('renders source-free cached panels as busy and inert without mounting the editable workspace', async () => {
+it('allows cached-list browsing without mounting an editable workspace', async () => {
   const render = createHarness()
   await render.update(preview, true, false)
   expect(render.node.textContent).not.toContain('editable child')
   expect(render.node.querySelector('[data-testid="workspace-startup-preview"]')).not.toBeNull()
-  expect(render.node.querySelector('[data-testid="workspace-startup-cached-panels"]')?.getAttribute('data-pointer')).toBe('none')
-  expect(render.node.querySelector('[data-testid="workspace-startup-cached-panels"]')?.getAttribute('data-hidden')).toBe('true')
+  expect(render.node.querySelector('[data-testid="workspace-startup-cached-panels"]')?.getAttribute('data-pointer')).not.toBe('none')
+  expect(render.node.querySelector('[data-testid="workspace-startup-cached-panels"]')?.getAttribute('data-hidden')).not.toBe('true')
   expect(panels.list).toHaveBeenCalledWith(expect.objectContaining({ fullWidth: true, compact: true, showCreateAction: false,
-    notes: preview.notes, toolbarTrailing: expect.anything(), leading: expect.anything() }), undefined)
+    notes: preview.notes, toolbarTrailing: expect.anything() }), undefined)
   expect(panels.sidebar).not.toHaveBeenCalled()
+  const list = panels.list.mock.lastCall?.[0]
+  list.onSelectNote('chosen.md')
+  expect(render.select).toHaveBeenCalledWith('chosen.md')
+  expect(capture).toHaveBeenCalledWith({ name: 'mobile_startup_preview_used' })
+  expect(list.bulkActions).toBeUndefined()
+  expect(list.onToggleNoteFavorite).toBeUndefined()
 })
 
 it('uses the normal tablet panel components when the viewport allows its sidebar', async () => {
@@ -67,6 +77,23 @@ it('uses the normal tablet panel components when the viewport allows its sidebar
   await render.update(preview, true, false)
   expect(panels.sidebar).toHaveBeenCalledWith(expect.objectContaining({ sections: preview.sidebarSections, title: 'Cached QA' }), undefined)
   expect(panels.list).toHaveBeenCalledWith(expect.objectContaining({ fullWidth: false }), undefined)
+})
+
+it('browses cached types and archived notes with the normal navigation rules and no write actions', async () => {
+  device.tablet = true
+  device.width = 1366
+  const note = workspaceScenarioForId(null).notes[0]
+  const notes = [{ ...note, id: 'open.md', type: 'Note', archived: false },
+    { ...note, id: 'archived.md', type: 'Note', archived: true }]
+  const cached = { ...preview, notes, allNotes: notes }
+  const render = createHarness()
+  await render.update(cached, true, false)
+  await act(async () => panels.sidebar.mock.lastCall?.[0].onSelectItem({ id: 'type-note', label: 'Notes', typeName: 'Note', sectionId: 'types' }))
+  expect(panels.list.mock.lastCall?.[0].notes.map((value: { id: string }) => value.id)).toEqual(['open.md'])
+  await act(async () => panels.list.mock.lastCall?.[0].onNoteListFilterChange('archived'))
+  expect(panels.list.mock.lastCall?.[0].notes.map((value: { id: string }) => value.id)).toEqual(['archived.md'])
+  expect(panels.list.mock.lastCall?.[0].bulkActions).toBeUndefined()
+  expect(render.node.textContent).not.toContain('editable child')
 })
 
 it('keeps the sidebar hidden in a narrow iPad window just like the real workspace', async () => {
@@ -112,6 +139,7 @@ function createHarness(children: ReactNode = 'editable child') {
   const node = document.createElement('div')
   const root = createRoot(node)
   roots.push(root)
-  return { node, update: (preview: WorkspaceSnapshotPreview | null, pending: boolean, hasActiveWorkspace: boolean) =>
-    act(async () => root.render(createElement(MobileWorkspaceStartup, { preview, pending, hasActiveWorkspace, children }))) }
+  const select = vi.fn()
+  return { node, select, update: (preview: WorkspaceSnapshotPreview | null, pending: boolean, hasActiveWorkspace: boolean) =>
+    act(async () => root.render(createElement(MobileWorkspaceStartup, { preview, pending, hasActiveWorkspace, children, onSelectNote: select }))) }
 }

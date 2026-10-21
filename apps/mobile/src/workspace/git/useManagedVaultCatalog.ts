@@ -29,7 +29,22 @@ export function useManagedVaultCatalog() {
     setState(previous => ({ ...previous, pending: true, error: null, preview: null }))
     setAttempt(value => value + 1)
   }, [])
-  return { ...state, reload, retry }
+  const selectPreviewNote = useCallback((noteId: string) => {
+    setState(previous => selectCachedNote(previous, noteId))
+  }, [])
+  return { ...state, reload, retry, selectPreviewNote }
+}
+
+function selectCachedNote(state: CatalogState, noteId: string): CatalogState {
+  if (!state.pending || !state.preview) return state
+  const notes = state.preview.allNotes.length ? state.preview.allNotes : state.preview.notes
+  if (!notes.some(note => note.id === noteId)) return state
+  return { ...state, preview: { ...state.preview, selectedNoteId: noteId } }
+}
+
+function selectedAfterPreparation(selection: NativeWorkspaceSelection | null, preview: WorkspaceSnapshotPreview | null) {
+  if (!selection || !preview?.selectedNoteId) return selection
+  return { ...selection, selectedNoteId: preview.selectedNoteId }
 }
 
 function restoreCatalogState(update: UpdateCatalog) {
@@ -46,7 +61,8 @@ function restoreCatalogState(update: UpdateCatalog) {
     if (!active) return
     update(previous => ({ ...previous, preview }))
     const selection = await prepareNativeWorkspace(restored.selection, cancellation.signal)
-    if (active) update(previous => ({ ...previous, restored: { ...restored, selection }, preview: null }))
+    if (active) update(previous => ({ ...previous,
+      restored: { ...restored, selection: selectedAfterPreparation(selection, previous.preview) }, preview: null }))
   }).then(() => finishCatalogRestoration(active, update), () => finishCatalogRestoration(active, update, stage))
   return () => { active = false; cancellation.abort() }
 }

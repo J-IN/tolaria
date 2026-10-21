@@ -39,7 +39,8 @@ export function MobileVaultProvider({ children }: { children: ReactNode }) {
       <MobileVaultControlsContext.Provider value={controls}>
         <WorkspaceLoadBoundary key={revision} fallback={<MobileWorkspaceLoadFailure onManage={open} />}>
           {restoreError ? <MobileWorkspaceLoadFailure onManage={open} onRetry={manager.catalog.retry} reason={restoreError} /> :
-            <MobileWorkspaceStartup preview={manager.catalog.preview} pending={restorePending} hasActiveWorkspace={Boolean(active.selection)}>
+            <MobileWorkspaceStartup preview={manager.catalog.preview} pending={restorePending} hasActiveWorkspace={Boolean(active.selection)}
+              onSelectNote={manager.catalog.selectPreviewNote}>
               {children}
             </MobileWorkspaceStartup>}
         </WorkspaceLoadBoundary>

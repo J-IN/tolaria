@@ -29,6 +29,9 @@ import type {
 } from './tabletWorkspaceNavigation'
 
 type TabletSidebarItemSelection = Extract<TabletSidebarSelection, { kind: 'item' }>
+export { editorBlocksForSelection, editorBulletsForSelection } from './tabletWorkspaceEditorContent'
+type NavigationMetadata = Pick<MobileWorkspaceSnapshot, 'notes' | 'allNotes' | 'sidebarSections' | 'vaultConfig'
+  | 'typeDefinitions' | 'views' | 'noteListPropertyOverrides'>
 
 export function tabletNavigationScopePresentation(
   snapshot: MobileWorkspaceSnapshot,
@@ -53,12 +56,12 @@ export function tabletNavigationScopePresentation(
 }
 
 type SidebarNotesResolver = (
-  snapshot: MobileWorkspaceSnapshot,
+  snapshot: NavigationMetadata,
   notes: MobileNote[],
   selection: TabletSidebarItemSelection,
 ) => MobileNote[]
 
-type NoteListPropertyResolver = (snapshot: MobileWorkspaceSnapshot, selection: TabletSidebarItemSelection) => string[]
+type NoteListPropertyResolver = (snapshot: NavigationMetadata, selection: TabletSidebarItemSelection) => string[]
 
 const sidebarSectionResolvers = new Map<string, SidebarNotesResolver>([
   ['favorites', (_snapshot, notes, selection) => notesForFavoriteSelection(notes, selection)],
@@ -94,7 +97,7 @@ export function initialSelectedNoteId(snapshot: MobileWorkspaceSnapshot) {
   return snapshot.selectedNoteId ?? snapshot.notes[0]?.id ?? null
 }
 
-export function initialSidebarSelection(snapshot: MobileWorkspaceSnapshot): TabletSidebarSelection {
+export function initialSidebarSelection(snapshot: Pick<MobileWorkspaceSnapshot, 'sidebarSections'>): TabletSidebarSelection {
   const primaryItem = snapshot.sidebarSections
     .find((section) => section.id === 'primary')
     ?.items?.find(activeSidebarItem)
@@ -113,7 +116,7 @@ export function activeSidebarItem(item: MobileSidebarItem) {
 }
 
 export function notesForSidebarSelection(
-  snapshot: MobileWorkspaceSnapshot,
+  snapshot: NavigationMetadata,
   selection: TabletSidebarSelection,
   options: { noteListFilter?: MobileNoteListFilter } = {},
 ) {
@@ -134,7 +137,7 @@ export function notesForSidebarSelection(
 }
 
 export function noteListFilterCountsForSelection(
-  snapshot: MobileWorkspaceSnapshot,
+  snapshot: NavigationMetadata,
   selection: TabletSidebarSelection,
 ): Record<MobileNoteListFilter, number> {
   if (!shouldShowNoteListFilter(selection)) return { archived: 0, open: 0 }
@@ -158,7 +161,7 @@ export function shouldShowNoteListFilter(selection: TabletSidebarSelection): boo
 }
 
 export function primaryNotesForSelection(
-  snapshot: MobileWorkspaceSnapshot,
+  snapshot: NavigationMetadata,
   notes: MobileNote[],
   selection: TabletSidebarItemSelection,
 ) {
@@ -192,11 +195,11 @@ export function neighborhoodForSelection(
   )
 }
 
-export function workspaceNotes(snapshot: MobileWorkspaceSnapshot) {
+export function workspaceNotes(snapshot: Pick<MobileWorkspaceSnapshot, 'notes' | 'allNotes'>) {
   return snapshot.allNotes ?? snapshot.notes
 }
 
-export function notesForSavedView(snapshot: MobileWorkspaceSnapshot, selection: TabletSidebarItemSelection) {
+export function notesForSavedView(snapshot: NavigationMetadata, selection: TabletSidebarItemSelection) {
   const view = savedViewForSelection(snapshot, selection)
   if (!view) return []
 
@@ -246,7 +249,7 @@ export function favoriteNoteId(itemId: string) {
 }
 
 export function notesForTypeSelection(
-  snapshot: MobileWorkspaceSnapshot,
+  snapshot: NavigationMetadata,
   notes: MobileNote[],
   selection: TabletSidebarItemSelection,
 ) {
@@ -258,13 +261,13 @@ export function noteMatchesArchiveFilter(note: MobileNote, filter: MobileNoteLis
   return filter === 'archived' ? note.archived === true : !note.archived
 }
 
-export function noteListPropertiesForSelection(snapshot: MobileWorkspaceSnapshot, selection: TabletSidebarSelection) {
+export function noteListPropertiesForSelection(snapshot: NavigationMetadata, selection: TabletSidebarSelection) {
   if (selection.kind !== 'item') return []
   return noteListPropertyResolvers.get(selection.sectionId)?.(snapshot, selection) ?? []
 }
 
 export function primaryNoteListPropertiesForSelection(
-  snapshot: MobileWorkspaceSnapshot,
+  snapshot: NavigationMetadata,
   selection: TabletSidebarItemSelection,
 ) {
   if (selection.id === 'all-notes') return snapshot.noteListPropertyOverrides?.allNotes ?? []
@@ -272,16 +275,16 @@ export function primaryNoteListPropertiesForSelection(
   return []
 }
 
-export function savedViewForSelection(snapshot: MobileWorkspaceSnapshot, selection: TabletSidebarItemSelection) {
+export function savedViewForSelection(snapshot: NavigationMetadata, selection: TabletSidebarItemSelection) {
   return snapshot.views?.find((candidate) => candidate.id === selection.viewId || candidate.id === selection.id) ?? null
 }
 
-export function typeDefinitionForSelection(snapshot: MobileWorkspaceSnapshot, selection: TabletSidebarItemSelection) {
+export function typeDefinitionForSelection(snapshot: NavigationMetadata, selection: TabletSidebarItemSelection) {
   const typeName = typeNameForSelection(snapshot, selection)
   return typeName ? snapshot.typeDefinitions?.[typeName] : null
 }
 
-export function typeNameForSelection(snapshot: MobileWorkspaceSnapshot, selection: TabletSidebarItemSelection) {
+export function typeNameForSelection(snapshot: NavigationMetadata, selection: TabletSidebarItemSelection) {
   if (selection.typeName) return selection.typeName
   const sidebarTypeName = snapshot.sidebarSections
     .find((section) => section.id === 'types')
@@ -370,18 +373,4 @@ export function selectedMobileNote(
 
   if (!selectedNote) return null
   return snapshot.notes.find((note) => note.id === selectedNote.id) ?? selectedNote
-}
-
-export function editorBlocksForSelection(snapshot: MobileWorkspaceSnapshot, selectedNote: MobileNote | null) {
-  if (!selectedNote) return snapshot.editorBlocks
-  if (!isMobileMarkdownNote(selectedNote)) return []
-  if (selectedNote.editorBlocks) return selectedNote.editorBlocks
-  return snapshot.allNotes ? [] : snapshot.editorBlocks
-}
-
-export function editorBulletsForSelection(snapshot: MobileWorkspaceSnapshot, selectedNote: MobileNote | null) {
-  if (!selectedNote) return snapshot.editorBullets
-  if (!isMobileMarkdownNote(selectedNote)) return []
-  if (selectedNote.editorBullets) return selectedNote.editorBullets
-  return snapshot.allNotes ? [] : snapshot.editorBullets
 }
