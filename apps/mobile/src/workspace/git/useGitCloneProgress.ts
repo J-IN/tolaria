@@ -9,7 +9,7 @@ export type GitCloneControl = {
 
 export function useGitCloneProgress() {
   const active = useRef<AbortController | null>(null)
-  const [progress, setProgress] = useState<GitProgressEvent | null>(null)
+  const [progress] = useState(createProgressStore)
   const [running, setRunning] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [publishing, setPublishing] = useState(false)
@@ -22,8 +22,8 @@ export function useGitCloneProgress() {
     active.current = controller
     publishStarted.current = false
     setRunning(true)
-    setProgress(null)
-    const publish = throttledProgress(setProgress)
+    progress.publish(null)
+    const publish = throttledProgress(progress.publish)
     try {
       return await task({ signal: controller.signal, onPublish: () => {
         publishStarted.current = true
@@ -34,7 +34,7 @@ export function useGitCloneProgress() {
     } finally {
       if (active.current === controller) {
         active.current = null
-        setProgress(null)
+        progress.publish(null)
         setRunning(false)
         setCancelling(false)
         setPublishing(false)
@@ -47,6 +47,22 @@ export function useGitCloneProgress() {
     setCancelling(true)
   }
   return { run, cancel, running, cancelling, publishing, progress }
+}
+
+function createProgressStore() {
+  let value: GitProgressEvent | null = null
+  const listeners = new Set<() => void>()
+  return {
+    snapshot: () => value,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener)
+      return () => { listeners.delete(listener) }
+    },
+    publish: (next: GitProgressEvent | null) => {
+      value = next
+      for (const listener of listeners) listener()
+    },
+  }
 }
 
 function isCurrentClone(current: AbortController | null, controller: AbortController) {

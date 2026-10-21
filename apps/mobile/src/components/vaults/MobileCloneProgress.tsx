@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { X } from 'phosphor-react-native'
 import { Text } from '../ui/text'
@@ -13,8 +14,9 @@ export function MobileCloneProgress({ clone }: { clone: ReturnType<typeof useGit
   const styles = useMobileStyles(createVaultManagerStyles)
   const colors = useMobileColors()
   const analytics = useMobileAnalytics()
+  const progress = useSyncExternalStore(clone.progress.subscribe, clone.progress.snapshot, clone.progress.snapshot)
   if (!clone.running) return null
-  const status = gitCloneProgressLabel(clone)
+  const status = gitCloneProgressLabel({ progress, cancelling: clone.cancelling, publishing: clone.publishing })
   return <View style={styles.content} testID="git-clone-progress">
     <View style={styles.progress} accessibilityRole="progressbar" accessibilityValue={status.value}>
       <ActivityIndicator color={colors.primary} />

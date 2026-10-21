@@ -326,6 +326,10 @@ completed clone is retained if catalog publication fails, preserving recovery.
 manager's scrollable content. Counts describe the current library phase, not an
 invented overall completion percentage. Cancellation stays pending through
 cleanup and is no longer offered once catalog publication starts.
+Clone phase/count snapshots use a per-clone-controller external store subscribed
+to by `MobileCloneProgress`, so progress ticks do not rerender the vault provider
+and surrounding panes. Lifecycle changes (start, cancellation, publication and
+completion) still update the provider's controls.
 `githubAccountState.ts` isolates cancellation and ordered
 SecureStore writes from React. Native Git HTTP uses Expo's streaming fetch with
 redirects disabled. Its 120-second timeout bounds connection/header waits and
