@@ -14,7 +14,7 @@ export function MobileVaultProvider({ children }: { children: ReactNode }) {
   const manager = useMobileVaults()
   const preferences = useMobileSettings()
   const { active, open, restorePending, revision, editors } = manager
-  const restoreError = !active.selection && !manager.catalog.pending ? manager.catalog.error : null
+  const recovery = workspaceRecovery(manager)
   // Sync progress must not make the workspace re-index a large vault.
   const workspace = useMemo(() => ({ selection: active.selection, open, restorePending }), [active.selection, open, restorePending])
   const pending = manager.syncHistory.record.pendingPaths
@@ -38,7 +38,7 @@ export function MobileVaultProvider({ children }: { children: ReactNode }) {
     <NativeWorkspaceContext.Provider value={workspace}>
       <MobileVaultControlsContext.Provider value={controls}>
         <WorkspaceLoadBoundary key={revision} fallback={<MobileWorkspaceLoadFailure onManage={open} />}>
-          {restoreError ? <MobileWorkspaceLoadFailure onManage={open} onRetry={manager.catalog.retry} reason={restoreError} /> :
+          {recovery?.reason ? <MobileWorkspaceLoadFailure onManage={open} onRetry={recovery.retry} reason={recovery.reason} /> :
             <MobileWorkspaceStartup preview={manager.catalog.preview} pending={restorePending} hasActiveWorkspace={Boolean(active.selection)}
               onSelectNote={manager.catalog.selectPreviewNote}>
               {children}
@@ -50,6 +50,11 @@ export function MobileVaultProvider({ children }: { children: ReactNode }) {
       </MobileVaultControlsContext.Provider>
     </NativeWorkspaceContext.Provider>
   </WorkspaceSyncEditorsContext.Provider></MobileVaultPickerContext.Provider>
+}
+
+function workspaceRecovery(manager: ReturnType<typeof useMobileVaults>) {
+  if (manager.refreshFailed) return { reason: 'selection' as const, retry: manager.retryWorkspace }
+  if (!manager.active.selection && !manager.catalog.pending) return { reason: manager.catalog.error, retry: manager.catalog.retry }
 }
 
 function vaultPicker(manager: ReturnType<typeof useMobileVaults>, manage: () => void) {

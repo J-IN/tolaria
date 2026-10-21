@@ -28,7 +28,7 @@ import { useGitSyncProgress } from './useGitSyncProgress'
 import { useVaultNotices } from '../useVaultNotices'
 import type { ManagedGitVault } from './managedGitVaults'
 import type { ManagedLocalVault } from './managedLocalVaults'
-import { refreshedVault } from './mobileVaultSelection'
+import { usePreparedVaultRefresh } from './usePreparedVaultRefresh'
 
 export type { VaultSyncState } from '../syncLedgerModel'
 type VaultError = ReturnType<typeof githubFailure> | 'mobile.vaults.saveFailed' | 'mobile.vaults.folderUnavailable' | 'mobile.vaults.folderConflict' | null
@@ -45,6 +45,10 @@ export function useMobileVaults() {
   const active = override ?? catalog.restored ?? { selection: null, git: null }
   useMobileVaultEvents(active.selection?.vaultRootUri)
   const [revision, setRevision] = useState(0)
+  const workspaceRefresh = usePreparedVaultRefresh(next => {
+    setOverride(next)
+    setRevision(value => value + 1)
+  })
   const [opened, setOpened] = useState(false)
   const [busy, setBusy] = useState(false)
   const [conflictReview, setConflictReview] = useState<VaultConflictReview | null>(null)
@@ -109,10 +113,7 @@ export function useMobileVaults() {
           saved = true
           return resolveVaultTask(task, active, (result) => { next = result })
         },
-        refresh: (selectedNoteId) => {
-          setOverride(refreshedVault(next, active, selectedNoteId))
-          setRevision((value) => value + 1)
-        },
+        refresh: selectedNoteId => workspaceRefresh.refresh(next, active, selectedNoteId),
       })
     } catch (failure) {
       const outcome = handleOperationFailure(failure, saved, present, signal)
@@ -144,10 +145,7 @@ export function useMobileVaults() {
     const localAccess = createGitEditorAccess({
       editors, rootUri: active.selection?.vaultRootUri,
       deferWhileFocused: () => automaticSyncInForeground(signal),
-      refresh: selectedNoteId => {
-        setOverride(refreshedVault(active, active, selectedNoteId))
-        setRevision(value => value + 1)
-      },
+      refresh: selectedNoteId => workspaceRefresh.refresh(active, active, selectedNoteId),
     })
     const result = await syncProgress.run(onProgress => syncGitVault({
       ...connection, http: nativeGitHttp,
@@ -229,7 +227,7 @@ export function useMobileVaults() {
   }
 
   useVaultBackgroundSync({
-    active, linked, editors, busy, opened, restorePending, status,
+    active, linked, editors, busy, opened, restorePending: restorePending || workspaceRefresh.failed, status,
     syncGit: signal => perform(() => syncTask(true, signal), false, 'autoSync', signal),
     syncFolder: signal => perform(() => syncTask(false, signal), false, undefined, signal),
   })
@@ -247,6 +245,7 @@ export function useMobileVaults() {
     clone: (url: string) => catalogActions().clone(url),
     account, active, busy, catalog, close, cloneProgress, syncProgress, editors, error, open, opened, linked, syncHistory, notices,
     phase, restorePending, revision, status, sync, commit, lastCommitId,
+    refreshFailed: workspaceRefresh.failed, retryWorkspace: () => perform(async () => active, false),
     conflictReview, conflictFailure, reviewConflicts, resolveConflicts, cancelConflictReview,
   }
 }

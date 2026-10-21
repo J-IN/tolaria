@@ -5,7 +5,7 @@ import type { createWorkspaceSyncEditors } from '../workspaceSyncEditors'
 export function createGitEditorAccess(options: {
   editors: ReturnType<typeof createWorkspaceSyncEditors>
   rootUri?: string
-  refresh: (selectedNoteId?: string) => void
+  refresh: (selectedNoteId?: string) => void | Promise<void>
   deferWhileFocused?: () => boolean
 }): GitLocalAccess {
   return async operation => {
