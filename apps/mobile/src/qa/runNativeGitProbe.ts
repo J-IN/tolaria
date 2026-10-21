@@ -10,6 +10,7 @@ import { nativeVaultReadBenchmark } from './nativeVaultReadBenchmark'
 import { assertNativeGitRecovery } from './nativeGitRecoveryProbe'
 import { assertGitReadFailureSafety } from './assertGitReadFailureSafety'
 import { measureEventLoopDelay } from './measureEventLoopDelay'
+import { measureGitFileSystem } from './measureGitFileSystem'
 import { postNativeQaEvent, setNativeQaSinkUrl } from './nativeQaSink'
 
 let running = false
@@ -71,10 +72,14 @@ async function roundTrip(root: Directory, endpoint: string, enter: (phase: strin
   const repositoryUrl = 'https://github.com/team/vault'
   const started = Date.now()
   enter('clone.first')
-  await cloneGitVault({ ...connection(first), onProgress: progressPhases('clone.first', enter) }, repositoryUrl)
+  const firstConnection = connection(first)
+  const firstFileSystem = measureGitFileSystem(firstConnection.fs)
+  await cloneGitVault({ ...firstConnection, fs: firstFileSystem.fs, onProgress: progressPhases('clone.first', enter) }, repositoryUrl)
   const firstCloned = Date.now()
   enter('clone.second')
-  await cloneGitVault({ ...connection(second), onProgress: progressPhases('clone.second', enter) }, repositoryUrl)
+  const secondConnection = connection(second)
+  const secondFileSystem = measureGitFileSystem(secondConnection.fs)
+  await cloneGitVault({ ...secondConnection, fs: secondFileSystem.fs, onProgress: progressPhases('clone.second', enter) }, repositoryUrl)
   const secondCloned = Date.now()
   enter('fixture.edit')
   const content = '---\ncustom: preserved\ntags: [native]\n---\n# Native Git round trip\n'
@@ -105,7 +110,8 @@ async function roundTrip(root: Directory, endpoint: string, enter: (phase: strin
     pullMs: secondSynced - firstSynced,
     unchangedSyncMs: unchangedSynced - secondSynced,
   }
-  return { passed, ...preserved, unchangedSync, pushed: pushed.kind, pulled: pulled.kind, timings }
+  return { passed, ...preserved, unchangedSync, pushed: pushed.kind, pulled: pulled.kind, timings,
+    fileSystem: { firstClone: firstFileSystem.snapshot(), secondClone: secondFileSystem.snapshot() } }
 }
 
 function progressPhases(group: string, enter: (phase: string) => void) {

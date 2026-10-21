@@ -237,6 +237,13 @@ callbacks are ignored after completion. The native Git proof records library
 clone progress phases and sync checkpoint/fetch/checkout/push boundaries using
 fixed diagnostic labels, never note content or paths. These samples measure
 JavaScript scheduling delay, not native animation frame rate.
+The QA-only `measureGitFileSystem.ts` wrapper adds fixed-method call/failure counts
+and cumulative awaited-operation latency to each clone proof. It records no paths,
+arguments, contents or error messages, preserves byte views and rejection identity,
+and adds no cache. Overlapping waits contribute independently; these numbers must
+not be interpreted as CPU time or summed into clone wall-clock time.
+Rejected filesystem calls include expected missing-entry probes, not just failures
+of the overall clone.
 `nativeMetroProofLog.ts` is a host-only, bounded reader for development-build
 proofs that React Native sends to Metro instead of iOS system logs. The workspace
 persistence command accepts `--metro-log` and captures its byte boundary before
